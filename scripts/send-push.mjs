@@ -62,11 +62,18 @@ export function computeSummary(users, now) {
   const byHabit = {};
   let streakSum = 0, streakCount = 0, longest = 0, checkedInToday = 0;
   for (const u of active) {
-    const habit = typeof u.habit === "string" && u.habit ? u.habit : "other";
-    byHabit[habit] = (byHabit[habit] || 0) + 1;
-    const streak = typeof u.streakStart === "number" && u.streakStart <= now ? now - u.streakStart : 0;
-    if (typeof u.streakStart === "number" && u.streakStart <= now) { streakSum += streak; streakCount++; }
-    longest = Math.max(longest, streak, typeof u.bestMs === "number" ? u.bestMs : 0);
+    // Newer app versions send one entry per habit in `streaks`; older ones a single habit.
+    const streaks = Array.isArray(u.streaks) && u.streaks.length
+      ? u.streaks
+      : [{ habit: u.habit, streakStart: u.streakStart, bestMs: u.bestMs }];
+    for (const s of streaks) {
+      const habit = typeof s.habit === "string" && s.habit ? s.habit : "other";
+      byHabit[habit] = (byHabit[habit] || 0) + 1;
+      const ok = typeof s.streakStart === "number" && s.streakStart <= now;
+      const streak = ok ? now - s.streakStart : 0;
+      if (ok) { streakSum += streak; streakCount++; }
+      longest = Math.max(longest, streak, typeof s.bestMs === "number" ? s.bestMs : 0);
+    }
     if (u.lastCheckinDate && u.lastCheckinDate === localParts(now, u.tz).date) checkedInToday++;
   }
   return {

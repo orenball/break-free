@@ -129,6 +129,11 @@
   .badge.done { border-style: solid; border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
   .badge.done .emo { filter: none; opacity: 1; }
   .badge.fav { box-shadow: 0 0 0 2px var(--gold); }
+  .hc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .hc-head .emo { font-size: 24px; line-height: 1; }
+  .hc-head h3 { margin: 0; }
+  .fav-line { color: var(--muted); text-align: center; font-size: 13px; margin: -6px 0 12px; min-height: 1em; }
+  .ms-chips { margin-bottom: 12px; }
   .fav-box { background: var(--gold-soft); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
   .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
   .day { text-align: center; border-radius: 10px; padding: 6px 2px; background: var(--panel-2); font-size: 12px; }
@@ -300,26 +305,38 @@
     return {
       lang: null, setupDone: false,
       name: "", age: "", about: "",
-      habit: null, habitOther: "",
-      startDate: todayStr(), startTime: nowTimeStr(),
-      amount: "", amount2: "", freqChoice: "", cost: "", currency: "₪",
+      habits: [], currency: "₪",
       goals: [], goalOther: "", improve: "", critical: 7, belief: null,
       share: null, shareName: "", milestone: null, milestoneOther: "",
       why: "", reminderTime: "20:00",
-      streakStart: null, bestMs: 0, restarts: 0,
-      checkins: {}, saidNo: null, lastPrompt: null,
+      checkins: {}, lastPrompt: null,
       shareId: null, notify: false, fcmToken: null
     };
   }
   var S = load();
-  var step = 0, whyWarned = false, currentTab = "pHome", openArticle = null;
+  var step = 0, whyWarned = false, currentTab = "pHome", openArticle = null, msIdx = 0;
 
   function load() {
     try {
       var raw = localStorage.getItem(KEY);
-      if (raw) { var s = JSON.parse(raw), b = blankState(); for (var k in b) if (!(k in s)) s[k] = b[k]; return s; }
+      if (raw) { var s = JSON.parse(raw), b = blankState(); migrate(s); for (var k in b) if (!(k in s)) s[k] = b[k]; return s; }
     } catch (e) {}
     return blankState();
+  }
+  function newHabit(key) {
+    return { key: key, other: "", startDate: todayStr(), startTime: nowTimeStr(), amount: "", amount2: "", freqChoice: "", cost: "",
+      streakStart: null, bestMs: 0, restarts: 0, saidNo: null };
+  }
+  /* Older versions kept a single habit at the top level: move it into S.habits. */
+  function migrate(s) {
+    var OLD_KEYS = ["startDate", "startTime", "amount", "amount2", "freqChoice", "cost", "streakStart", "bestMs", "restarts", "saidNo"];
+    if (s.habit && !Array.isArray(s.habits)) {
+      var h = newHabit(s.habit);
+      OLD_KEYS.forEach(function (k) { if (k in s) h[k] = s[k]; });
+      h.other = s.habitOther || "";
+      s.habits = [h];
+    }
+    ["habit", "habitOther"].concat(OLD_KEYS).forEach(function (k) { delete s[k]; });
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
@@ -344,17 +361,14 @@
   function dateKey(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
   function todayStr() { return dateKey(new Date()); }
   function nowTimeStr() { var d = new Date(); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
-  function hab(key) { return L().habits[key || S.habit] || L().habits.other; }
-  function habitLabel(key, other) {
-    key = key || S.habit;
-    if (key === "other") return other != null ? other : (S.habitOther || hab("other").label);
-    return hab(key).label;
+  function hab(key) { return L().habits[key] || L().habits.other; }
+  function habitLabel(h) { return h.key === "other" ? (h.other || hab("other").label) : hab(h.key).label; }
+  function habitNameOf(h) {
+    if (h.key === "other") return h.other || hab("other").label;
+    var x = hab(h.key);
+    return S.lang === "he" ? (x.short || x.label) : (x.short || x.label).toLowerCase();
   }
-  function habitName() {
-    if (S.habit === "other") return S.habitOther || hab("other").label;
-    var h = hab();
-    return S.lang === "he" ? (h.short || h.label) : (h.short || h.label).toLowerCase();
-  }
+  function habitNames() { return joinNice(S.habits.map(habitNameOf)); }
   function goalLabels() {
     var list = S.goals.map(function (id) { var g = L().goals[id]; return g ? (S.lang === "he" ? g.label : g.label.toLowerCase()) : id; });
     if (S.goalOther.trim()) list.push(S.goalOther.trim());
@@ -369,7 +383,8 @@
     if (id === "custom") return S.milestoneOther;
     return L().milestones[id] || "";
   }
-  function streakMs() { return S.streakStart ? Date.now() - S.streakStart : 0; }
+  function streakMsOf(h) { return h.streakStart ? Date.now() - h.streakStart : 0; }
+  function longestStreak() { return S.habits.reduce(function (m, h) { return Math.max(m, streakMsOf(h)); }, 0); }
   function fmtNum(n) { return n >= 100 ? Math.round(n).toLocaleString(L().locale) : (Math.round(n * 10) / 10).toLocaleString(L().locale); }
   function heldText(ms) {
     var d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, P = L().plural;
@@ -450,80 +465,104 @@
         var a = +S.age; if (!S.age || isNaN(a) || a < 10 || a > 120) return t("errAge");
       }
     },
-    { // habit
+    { // habits (one or more)
       render: function () {
         var html = "<h2>" + t("habitTitle") + "</h2><p class='sub'>" + t("habitSub") + "</p><div class='tiles'>";
         HABIT_ORDER.forEach(function (k) {
-          html += "<button class='tile" + (S.habit === k ? " selected" : "") + "' data-habit='" + k + "'><span class='emo'>" + EMO[k] + "</span>" + esc(L().habits[k].label) + "</button>";
+          var on = !!findHabit(k);
+          html += "<button class='tile" + (on ? " selected" : "") + "' data-habit='" + k + "' aria-pressed='" + on + "'><span class='emo'>" + EMO[k] + "</span>" + esc(L().habits[k].label) + "</button>";
         });
         html += "</div>";
-        if (S.habit === "other") html += "<label class='field' for='habitOther'>" + t("otherWhat") + "</label><input type='text' id='habitOther' maxlength='40' placeholder='" + esc(t("otherPh")) + "' value='" + esc(S.habitOther) + "'>";
+        var o = findHabit("other");
+        if (o) html += "<label class='field' for='habitOther'>" + t("otherWhat") + "</label><input type='text' id='habitOther' maxlength='40' placeholder='" + esc(t("otherPh")) + "' value='" + esc(o.other) + "'>";
         return html;
       },
       bind: function () {
         document.querySelectorAll("[data-habit]").forEach(function (b) {
           b.addEventListener("click", function () {
-            if (S.habit !== b.dataset.habit) { S.amount = ""; S.amount2 = ""; S.freqChoice = ""; S.cost = ""; }
-            S.habit = b.dataset.habit; renderStep();
+            var k = b.dataset.habit, i = S.habits.map(function (h) { return h.key; }).indexOf(k);
+            if (i >= 0) S.habits.splice(i, 1); else S.habits.push(newHabit(k));
+            renderStep();
           });
         });
-        var o = $("habitOther"); if (o) o.addEventListener("input", function () { S.habitOther = o.value; });
+        var o = $("habitOther"); if (o) o.addEventListener("input", function () { findHabit("other").other = o.value; });
       },
       validate: function () {
-        if (!S.habit) return t("errHabit");
-        if (S.habit === "other" && !S.habitOther.trim()) return t("errOther");
+        if (!S.habits.length) return t("errHabit");
+        var o = findHabit("other");
+        if (o && !o.other.trim()) return t("errOther");
       }
     },
-    { // start date
+    { // start date per habit
       render: function () {
-        return "<h2>" + t("dateTitle") + "</h2><p class='sub'>" + t("dateSub") + "</p>" +
-          "<div class='row'><div><label class='field' for='sDate'>" + t("startDate") + "</label><input type='date' id='sDate' value='" + esc(S.startDate) + "'></div>" +
-          "<div><label class='field' for='sTime'>" + t("startTime") + "</label><input type='time' id='sTime' value='" + esc(S.startTime) + "'></div></div>" +
-          "<p class='small muted'>" + t("dateTip") + "</p>";
+        var multi = S.habits.length > 1;
+        return "<h2>" + t("dateTitle") + "</h2><p class='sub'>" + t("dateSub") + "</p>" + S.habits.map(function (h, i) {
+          return (multi ? "<h3 style='margin-top:16px'>" + EMO[h.key] + " " + esc(habitLabel(h)) + "</h3>" : "") +
+            "<div class='row'><div><label class='field' for='sDate" + i + "'>" + t("startDate") + "</label><input type='date' id='sDate" + i + "' value='" + esc(h.startDate) + "'></div>" +
+            "<div><label class='field' for='sTime" + i + "'>" + t("startTime") + "</label><input type='time' id='sTime" + i + "' value='" + esc(h.startTime) + "'></div></div>";
+        }).join("") + "<p class='small muted'>" + t("dateTip") + "</p>";
       },
       bind: function () {
-        ["input", "change"].forEach(function (ev) {
-          $("sDate").addEventListener(ev, function () { S.startDate = this.value; });
-          $("sTime").addEventListener(ev, function () { S.startTime = this.value; });
+        S.habits.forEach(function (h, i) {
+          ["input", "change"].forEach(function (ev) {
+            $("sDate" + i).addEventListener(ev, function () { h.startDate = this.value; });
+            $("sTime" + i).addEventListener(ev, function () { h.startTime = this.value; });
+          });
         });
       },
-      validate: function () { if (!S.startDate) return t("errDate"); if (!S.startTime) S.startTime = "00:00"; }
+      validate: function () {
+        for (var i = 0; i < S.habits.length; i++) {
+          if (!S.habits[i].startDate) return t("errDate");
+          if (!S.habits[i].startTime) S.habits[i].startTime = "00:00";
+        }
+      }
     },
-    { // amount
+    { // amount per habit
       render: function () {
-        var h = hab(), m = HABIT_META[S.habit] || {}, html = "<h2>" + t("amtTitle") + "</h2><p class='sub'>" + t("amtSub") + "</p>";
-        if (m.choice) {
-          html += "<label class='field'>" + esc(h.q) + "</label><div class='opts'>";
-          h.choice.forEach(function (c, i) {
-            html += "<button class='opt" + (S.freqChoice === String(i) ? " selected" : "") + "' data-freq='" + i + "'>" + esc(c) + "</button>";
-          });
-          html += "</div>";
-        } else if (m.money) {
-          html += "<label class='field' for='amt'>" + esc(h.q) + "</label><div class='row'><input type='number' id='amt' min='0' step='any' inputmode='decimal' value='" + esc(S.amount) + "' placeholder='200'>" + currencySelect() + "</div>";
-          html += "<label class='field' for='amt2'>" + esc(h.second) + "</label><input type='number' id='amt2' min='0' step='any' inputmode='decimal' value='" + esc(S.amount2) + "' placeholder='5'>";
-        } else {
-          html += "<label class='field' for='amt'>" + esc(h.q) + "</label><input type='number' id='amt' min='0' step='any' inputmode='decimal' value='" + esc(S.amount) + "' placeholder='10'>";
-        }
-        if (m.costly) {
-          html += "<label class='field' for='cost'>" + t("costQ") + " <span class='muted'>" + t("optional") + "</span></label>" +
-            "<div class='row'><input type='number' id='cost' min='0' step='any' inputmode='decimal' value='" + esc(S.cost) + "' placeholder='50'>" + currencySelect() + "</div>";
-        }
+        var multi = S.habits.length > 1, needCur = false;
+        var html = "<h2>" + t("amtTitle") + "</h2><p class='sub'>" + t("amtSub") + "</p>";
+        S.habits.forEach(function (h, i) {
+          var x = hab(h.key), m = HABIT_META[h.key] || {};
+          var q = h.key === "other" ? x.q.replace("?", " (" + h.other + ")?") : x.q;
+          if (multi) html += "<h3 style='margin-top:18px'>" + EMO[h.key] + " " + esc(habitLabel(h)) + "</h3>";
+          if (m.choice) {
+            html += "<label class='field'>" + esc(q) + "</label><div class='opts'>" + x.choice.map(function (c, j) {
+              return "<button class='opt" + (h.freqChoice === String(j) ? " selected" : "") + "' data-freq='" + i + ":" + j + "'>" + esc(c) + "</button>";
+            }).join("") + "</div>";
+          } else if (m.money) {
+            needCur = true;
+            html += "<label class='field' for='amt" + i + "'>" + esc(q) + " (" + S.currency + ")</label><input type='number' id='amt" + i + "' min='0' step='any' inputmode='decimal' value='" + esc(h.amount) + "' placeholder='200'>";
+            html += "<label class='field' for='amtb" + i + "'>" + esc(x.second) + "</label><input type='number' id='amtb" + i + "' min='0' step='any' inputmode='decimal' value='" + esc(h.amount2) + "' placeholder='5'>";
+          } else {
+            html += "<label class='field' for='amt" + i + "'>" + esc(q) + "</label><input type='number' id='amt" + i + "' min='0' step='any' inputmode='decimal' value='" + esc(h.amount) + "' placeholder='10'>";
+          }
+          if (m.costly) {
+            needCur = true;
+            html += "<label class='field' for='cost" + i + "'>" + t("costQ") + " <span class='muted'>" + t("optional") + "</span></label>" +
+              "<input type='number' id='cost" + i + "' min='0' step='any' inputmode='decimal' value='" + esc(h.cost) + "' placeholder='50'>";
+          }
+        });
+        if (needCur) html += "<label class='field' for='currency'>" + t("currency") + "</label>" + currencySelect();
         return html;
       },
       bind: function () {
         document.querySelectorAll("[data-freq]").forEach(function (b) {
-          b.addEventListener("click", function () { S.freqChoice = b.dataset.freq; renderStep(); });
+          b.addEventListener("click", function () { var p = b.dataset.freq.split(":"); S.habits[+p[0]].freqChoice = p[1]; renderStep(); });
         });
-        [["amt", "amount"], ["amt2", "amount2"], ["cost", "cost"]].forEach(function (p) {
-          var el = $(p[0]); if (el) el.addEventListener("input", function () { S[p[1]] = el.value; });
+        S.habits.forEach(function (h, i) {
+          [["amt", "amount"], ["amtb", "amount2"], ["cost", "cost"]].forEach(function (p) {
+            var el = $(p[0] + i); if (el) el.addEventListener("input", function () { h[p[1]] = el.value; });
+          });
         });
-        var cur = $("currency"); if (cur) cur.addEventListener("change", function () { S.currency = cur.value; });
+        var cur = $("currency"); if (cur) cur.addEventListener("change", function () { S.currency = cur.value; renderStep(); });
       },
       validate: function () {
-        var m = HABIT_META[S.habit] || {};
-        if (m.choice) { if (S.freqChoice === "") return t("errChoice"); return; }
-        if (S.amount === "" || isNaN(+S.amount) || +S.amount < 0) return t("errNum");
-        if (m.money && (S.amount2 === "" || isNaN(+S.amount2) || +S.amount2 < 0)) return t("errBets");
+        for (var i = 0; i < S.habits.length; i++) {
+          var h = S.habits[i], m = HABIT_META[h.key] || {}, pre = S.habits.length > 1 ? habitLabel(h) + ": " : "";
+          if (m.choice) { if (h.freqChoice === "") return pre + t("errChoice"); continue; }
+          if (h.amount === "" || isNaN(+h.amount) || +h.amount < 0) return pre + t("errNum");
+          if (m.money && (h.amount2 === "" || isNaN(+h.amount2) || +h.amount2 < 0)) return pre + t("errBets");
+        }
       }
     },
     { // goals
@@ -619,7 +658,7 @@
     { // why
       render: function () {
         var html = "<h2>" + t("whyTitle") + "</h2><p class='sub'>" + t("whySub") + "</p>" +
-          "<h3>" + t("whyFocus") + "</h3><ul class='focus-list'>" + focusPrompts().map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul>" +
+          "<p class='note' style='margin-top:0'>💡 " + esc(whyHint()) + "</p>" +
           "<label class='field' for='why'>" + t("mySentence") + "</label><textarea id='why' maxlength='280' placeholder='" + esc(t("whyPh")) + "'>" + esc(S.why) + "</textarea>" +
           "<div class='small muted' id='whyCount'></div>" +
           "<label class='field' for='remTime'>" + t("remTime") + "</label><input type='time' id='remTime' value='" + esc(S.reminderTime) + "'>" +
@@ -638,9 +677,10 @@
         var share = S.share === "self" ? t("keepSelf") : L().share[S.share] + (S.shareName ? " — " + S.shareName : "");
         var rows = [
           [t("sName"), S.name], [t("sAge"), S.age],
-          [t("sQuit"), EMO[S.habit] + " " + habitLabel()],
-          [t("sStart"), new Date(startTs()).toLocaleString(L().locale, { dateStyle: "full", timeStyle: "short" })],
-          [t("sNow"), usageText()], [t("sAim"), joinNice(goalLabels())], [t("sImprove"), S.improve],
+          [t("sQuit"), S.habits.map(function (h) { return EMO[h.key] + " " + habitLabel(h); }).join(" · ")],
+          [t("sStart"), S.habits.map(function (h) { return (S.habits.length > 1 ? habitLabel(h) + ": " : "") + new Date(startTs(h)).toLocaleString(L().locale, { dateStyle: "medium", timeStyle: "short" }); }).join(" · ")],
+          [t("sNow"), S.habits.map(function (h) { return (S.habits.length > 1 ? habitLabel(h) + ": " : "") + usageText(h); }).join(" · ")],
+          [t("sAim"), joinNice(goalLabels())], [t("sImprove"), S.improve],
           [t("sCrit"), S.critical + " / 10"], [t("sBelief"), L().belief[S.belief].label], [t("sShare"), share],
           [t("sMs"), milestoneLabel(S.milestone)], [t("sWhy"), S.why], [t("sRem"), S.reminderTime]
         ];
@@ -651,16 +691,10 @@
     }
   ];
 
-  function focusPrompts() {
-    var list = [];
-    var goals = goalLabels();
-    if (goals.length) list.push(t("fGoal", { goals: joinNice(goals) }));
-    if (S.improve.trim()) list.push(t("fImprove", { improve: S.improve.trim() }));
-    list.push(t("fFor", { who: S.share === "person" && S.shareName.trim() ? S.shareName.trim() : t("fWhoDefault") }));
-    if (S.milestone) list.push(t("fMs", { ms: milestoneLabel(S.milestone) }));
-    list.push(t("fCrit", { crit: S.critical }));
-    list.push(t("fHardDay"));
-    return list;
+  /* one short idea of what to write, built from the person's own answers */
+  function whyHint() {
+    var goals = joinNice(goalLabels()) || t("fGoalDefault");
+    return S.improve.trim() ? t("whyHintImprove", { goals: goals, improve: S.improve.trim() }) : t("whyHint", { goals: goals });
   }
   function mentionsGoal(text) {
     var tx = text.toLowerCase();
@@ -673,25 +707,23 @@
   function validateWhy(text) {
     var w = text.trim();
     if (w.length < 10) return t("errWhyShort");
-    var sentences = w.split(/[.!?]+/).filter(function (x) { return x.trim().length > 2; }).length;
-    if (sentences > 2 && !whyWarned) { whyWarned = true; return t("errWhyLong"); }
-    if (!mentionsGoal(w) && !whyWarned) { whyWarned = true; return t("errWhyGoal", { goals: joinNice(goalLabels()) }); }
   }
   function updateWhyCount() {
     var el = $("whyCount"); if (!el) return;
     var w = S.why.trim();
     el.textContent = t("chars", { n: w.length }) + (w ? " · " + (mentionsGoal(w) ? t("hasGoal") : t("addGoal")) : "");
   }
-  function startTs() {
-    var p = S.startDate.split("-").map(Number), q = (S.startTime || "00:00").split(":").map(Number);
+  function findHabit(key) { return S.habits.filter(function (h) { return h.key === key; })[0]; }
+  function startTs(h) {
+    var p = h.startDate.split("-").map(Number), q = (h.startTime || "00:00").split(":").map(Number);
     return new Date(p[0], p[1] - 1, p[2], q[0], q[1]).getTime();
   }
-  function usageText() {
-    var h = hab(), m = HABIT_META[S.habit] || {}, per = L().per;
-    if (m.choice) return h.choice[+S.freqChoice] || "";
-    if (m.money) return S.currency + S.amount + " " + per.week + ", " + S.amount2 + " " + h.unit + " " + per.week;
-    var s = S.amount + " " + h.unit + " " + per[m.per];
-    if (S.cost) s += " (" + S.currency + S.cost + " " + per.week + ")";
+  function usageText(h) {
+    var x = hab(h.key), m = HABIT_META[h.key] || {}, per = L().per;
+    if (m.choice) return x.choice[+h.freqChoice] || "";
+    if (m.money) return S.currency + h.amount + " " + per.week + ", " + h.amount2 + " " + x.unit + " " + per.week;
+    var s = h.amount + " " + x.unit + " " + per[m.per];
+    if (h.cost) s += " (" + S.currency + h.cost + " " + per.week + ")";
     return s;
   }
 
@@ -709,7 +741,7 @@
     var err = STEPS[step].validate();
     if (err) { $("stepError").textContent = err; return; }
     if (step < STEPS.length - 1) { step++; whyWarned = false; save(); renderStep(); window.scrollTo(0, 0); return; }
-    S.setupDone = true; S.streakStart = startTs();
+    S.setupDone = true; S.habits.forEach(function (h) { h.streakStart = startTs(h); });
     if (reminderTsFor(new Date()) <= Date.now()) S.lastPrompt = todayStr();
     save(); route(); confetti(); toast(t("toastStart"));
     setTimeout(function () { offerReminders(); }, 1200);
@@ -758,59 +790,80 @@
 
   /* ================= home ================= */
   function renderHome() {
-    var p = $("pHome");
+    var p = $("pHome"), multi = S.habits.length > 1;
+    if (msIdx >= S.habits.length) msIdx = 0;
     p.innerHTML =
       "<div id='checkinBanner' class='banner hidden'><span>" + t("ciBanner") + "</span><button class='primary' id='openCheckinBtn'>" + t("ciNow") + "</button></div>" +
       "<div class='card why-card'><span class='eyebrow'>" + t("whyPageTitle") + "</span>" + esc(S.why) + "</div>" +
-      "<div class='card'><div class='timer-title' id='timerTitle'></div><div class='timer'>" +
-        "<div><b id='tD'>0</b><span>" + t("days") + "</span></div><div><b id='tH'>0</b><span>" + t("hours") + "</span></div>" +
-        "<div><b id='tM'>0</b><span>" + t("min") + "</span></div><div><b id='tS'>0</b><span>" + t("sec") + "</span></div></div>" +
-        "<div class='actions'><button class='primary' id='checkinNowBtn'>" + t("checkinBtn") + "</button><button class='danger' id='slipBtn'>" + t("slipBtn") + "</button></div></div>" +
+      "<div class='actions' style='margin-bottom:16px'><button class='primary' id='checkinNowBtn'>" + t("checkinBtn") + "</button></div>" +
+      S.habits.map(function (h, i) {
+        return "<div class='card'><div class='hc-head'><span class='emo'>" + EMO[h.key] + "</span><h3>" + esc(habitLabel(h)) + "</h3></div>" +
+          "<div class='timer-title' id='tt" + i + "'></div><div class='timer'>" +
+          "<div><b id='tD" + i + "'>0</b><span>" + t("days") + "</span></div><div><b id='tH" + i + "'>0</b><span>" + t("hours") + "</span></div>" +
+          "<div><b id='tM" + i + "'>0</b><span>" + t("min") + "</span></div><div><b id='tS" + i + "'>0</b><span>" + t("sec") + "</span></div></div>" +
+          "<div class='fav-line' id='fav" + i + "'></div>" +
+          "<div class='stats' id='stats" + i + "'></div>" +
+          "<div class='actions' style='margin-top:12px'><button class='danger' data-slip='" + i + "'>" + t("slipBtn") + "</button></div></div>";
+      }).join("") +
       "<div class='card'><h3>" + t("quoteTitle") + "</h3><div class='quote'>“" + esc(todaysQuote()) + "”</div></div>" +
-      "<div class='card'><h3>" + t("progressTitle") + "</h3><div class='stats' id='stats'></div></div>" +
-      "<div class='card'><h3>" + t("milestonesTitle") + "</h3><div class='fav-box' id='favBox'></div><div class='badges' id='badges'></div>" +
+      "<div class='card'><h3>" + t("milestonesTitle") + "</h3>" +
+        (multi ? "<div class='chips ms-chips'>" + S.habits.map(function (h, i) {
+          return "<button class='chip" + (i === msIdx ? " selected" : "") + "' data-msh='" + i + "'>" + EMO[h.key] + " " + esc(habitLabel(h)) + "</button>"; }).join("") + "</div>" : "") +
+        "<div class='fav-box' id='favBox'></div><div class='badges' id='badges'></div>" +
         "<div class='actions' style='margin-top:12px'><button id='saidNoBtn'></button></div></div>" +
       (S.share !== "self" ? "<div class='card'><h3>" + t("shareCardTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("shareCardSub") + "</p><div class='actions'><button class='primary' id='shareBtn'>" + t("shareBtn") + "</button></div></div>" : "") +
-      "<div class='card'><h3>" + t("daysTitle") + "</h3><div class='days' id='days'></div><p class='small muted' style='margin:10px 0 0'>" + t("daysLegend") + "</p></div>";
+      "<div class='card'><h3>" + t("daysTitle") + "</h3><div class='days' id='days'></div><p class='small muted' style='margin:10px 0'>" + t("daysLegend") + "</p>" +
+        "<div class='stats' style='grid-template-columns:1fr'>" + stat(checkinsYes(), t("cleanCheckins")) + "</div></div>";
     $("checkinNowBtn").addEventListener("click", openCheckin);
     $("openCheckinBtn").addEventListener("click", openCheckin);
-    $("slipBtn").addEventListener("click", askSlip);
-    $("saidNoBtn").addEventListener("click", function () { S.saidNo = todayStr(); save(); renderBadges(); confetti(); toast(t("saidNoToast")); });
+    p.querySelectorAll("[data-slip]").forEach(function (b) { b.addEventListener("click", function () { askSlip(+b.dataset.slip); }); });
+    p.querySelectorAll("[data-msh]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        msIdx = +b.dataset.msh;
+        p.querySelectorAll("[data-msh]").forEach(function (c) { c.classList.toggle("selected", +c.dataset.msh === msIdx); });
+        renderBadges();
+      });
+    });
+    $("saidNoBtn").addEventListener("click", function () { S.habits[msIdx].saidNo = todayStr(); save(); renderBadges(); confetti(); toast(t("saidNoToast")); });
     if ($("shareBtn")) $("shareBtn").addEventListener("click", shareProgress);
     tick(); renderStats(); renderBadges(); renderDays();
     if (S.lastPrompt === todayStr() && !S.checkins[todayStr()]) $("checkinBanner").classList.remove("hidden");
     checkReminder();
   }
   function todaysQuote() {
-    var list = L().quotes[S.habit] || L().quotes.other, d = new Date();
-    var n = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5);
-    return list[n % list.length];
+    var d = new Date(), n = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5);
+    var h = S.habits[n % S.habits.length] || { key: "other" };
+    var list = L().quotes[h.key] || L().quotes.other;
+    return list[Math.floor(n / S.habits.length) % list.length];
   }
   function tick() {
-    if (!$("tD")) return;
-    var ms = streakMs(), a = Math.abs(ms);
-    $("tD").textContent = Math.floor(a / 864e5); $("tH").textContent = Math.floor(a / 36e5) % 24;
-    $("tM").textContent = Math.floor(a / 6e4) % 60; $("tS").textContent = Math.floor(a / 1e3) % 60;
-    $("timerTitle").textContent = ms < 0 ? t("timerFuture") : t("timerTitle", { habit: habitName() });
+    S.habits.forEach(function (h, i) {
+      if (!$("tD" + i)) return;
+      var ms = streakMsOf(h), a = Math.abs(ms);
+      $("tD" + i).textContent = Math.floor(a / 864e5); $("tH" + i).textContent = Math.floor(a / 36e5) % 24;
+      $("tM" + i).textContent = Math.floor(a / 6e4) % 60; $("tS" + i).textContent = Math.floor(a / 1e3) % 60;
+      $("tt" + i).textContent = ms < 0 ? t("timerFuture") : t("timerTitle", { habit: habitNameOf(h) });
+    });
   }
   function stat(v, l) { return "<div class='stat'><b>" + esc(v) + "</b><span>" + esc(l) + "</span></div>"; }
   function renderStats() {
-    if (!$("stats")) return;
-    var h = hab(), m = HABIT_META[S.habit] || {}, ms = Math.max(0, streakMs()), days = ms / 864e5, best = Math.max(S.bestMs, ms);
-    var html = stat(t("dh", { d: Math.floor(best / 864e5), h: Math.floor(best / 36e5) % 24 }), t("bestStreak")) +
-      stat(S.restarts, S.restarts === 1 ? t("restartOne") : t("restartMany"));
-    if (!m.choice) {
-      if (m.money) {
-        html += stat("~" + fmtNum((+S.amount2 || 0) / 7 * days), h.avoided);
-        html += stat(S.currency + fmtNum((+S.amount || 0) / 7 * days), t("moneyKept"));
-      } else {
-        var perDay = m.per === "day" ? (+S.amount || 0) : (+S.amount || 0) / 7;
-        html += stat("~" + fmtNum(perDay * days), h.avoided);
-        if (S.cost) html += stat(S.currency + fmtNum((+S.cost) / 7 * days), t("moneySaved"));
+    S.habits.forEach(function (h, i) {
+      if (!$("stats" + i)) return;
+      var x = hab(h.key), m = HABIT_META[h.key] || {}, ms = Math.max(0, streakMsOf(h)), days = ms / 864e5, best = Math.max(h.bestMs, ms);
+      var html = stat(t("dh", { d: Math.floor(best / 864e5), h: Math.floor(best / 36e5) % 24 }), t("bestStreak")) +
+        stat(h.restarts, h.restarts === 1 ? t("restartOne") : t("restartMany"));
+      if (!m.choice) {
+        if (m.money) {
+          html += stat("~" + fmtNum((+h.amount2 || 0) / 7 * days), x.avoided);
+          html += stat(S.currency + fmtNum((+h.amount || 0) / 7 * days), t("moneyKept"));
+        } else {
+          var perDay = m.per === "day" ? (+h.amount || 0) : (+h.amount || 0) / 7;
+          html += stat("~" + fmtNum(perDay * days), x.avoided);
+          if (h.cost) html += stat(S.currency + fmtNum((+h.cost) / 7 * days), t("moneySaved"));
+        }
       }
-    }
-    html += stat(checkinsYes(), t("cleanCheckins"));
-    $("stats").innerHTML = html;
+      $("stats" + i).innerHTML = html;
+    });
   }
   function checkinsYes() { return Object.keys(S.checkins).filter(function (k) { return S.checkins[k] === "yes"; }).length; }
   function firstMorningTs(start) {
@@ -829,26 +882,37 @@
     var d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, mi = Math.floor(ms / 6e4) % 60;
     return d > 0 ? t("cdD", { d: d, h: h }) : h > 0 ? t("cdH", { h: h, m: mi }) : t("cdM", { m: mi });
   }
+  function favMilestone() { return MILESTONES.filter(function (m) { return m.id === S.milestone; })[0]; }
+  function favTarget(fav, h) { return fav.id === "morning" ? firstMorningTs(h.streakStart) : h.streakStart + fav.ms; }
   function renderBadges() {
-    if (!$("badges")) return;
+    var h = S.habits[msIdx];
+    if (!$("badges") || !h) return;
     $("badges").innerHTML = MILESTONES.map(function (m) {
-      return "<div class='badge" + (milestoneDone(m, S.streakStart, S.saidNo) ? " done" : "") + (S.milestone === m.id ? " fav" : "") + "'><span class='emo'>" + m.emo + "</span>" + esc(L().milestones[m.id]) + "</div>";
+      return "<div class='badge" + (milestoneDone(m, h.streakStart, h.saidNo) ? " done" : "") + (S.milestone === m.id ? " fav" : "") + "'><span class='emo'>" + m.emo + "</span>" + esc(L().milestones[m.id]) + "</div>";
     }).join("");
-    var fav = MILESTONES.filter(function (m) { return m.id === S.milestone; })[0], box = "";
+    var fav = favMilestone(), box = "";
     if (S.milestone === "custom") box = "⭐ <b>" + t("yourMs") + "</b> " + esc(S.milestoneOther) + "<br><span class='small muted'>" + t("msCustomHint") + "</span>";
     else if (fav) {
       var label = esc(L().milestones[fav.id]);
-      if (milestoneDone(fav, S.streakStart, S.saidNo)) box = "⭐ <b>" + t("msReached", { ms: label }) + "</b>";
+      if (milestoneDone(fav, h.streakStart, h.saidNo)) box = "⭐ <b>" + t("msReached", { ms: label }) + "</b>";
       else if (fav.id === "sayno") box = "⭐ <b>" + t("yourMs") + "</b> " + label + "<br><span class='small muted'>" + t("msSayNoHint") + "</span>";
-      else {
-        var target = fav.id === "morning" ? firstMorningTs(S.streakStart) : S.streakStart + fav.ms;
-        box = "⭐ <b>" + t("yourMs") + "</b> " + label + "<br><span class='small muted'>" + t("msToGo", { t: countdownText(target - Date.now()) }) + "</span>";
-      }
+      else box = "⭐ <b>" + t("yourMs") + "</b> " + label + "<br><span class='small muted'>" + t("msToGo", { t: countdownText(favTarget(fav, h) - Date.now()) }) + "</span>";
     }
     $("favBox").innerHTML = box; $("favBox").classList.toggle("hidden", !box);
     var b = $("saidNoBtn");
-    b.textContent = S.saidNo ? t("saidNoDone", { date: new Date(S.saidNo + "T12:00").toLocaleDateString(L().locale, { month: "short", day: "numeric" }) }) : t("saidNoBtn");
-    b.disabled = !!S.saidNo;
+    b.textContent = h.saidNo ? t("saidNoDone", { date: new Date(h.saidNo + "T12:00").toLocaleDateString(L().locale, { month: "short", day: "numeric" }) }) : t("saidNoBtn");
+    b.disabled = !!h.saidNo;
+    renderFavLines();
+  }
+  /* one short line per habit card: how far to the milestone you're waiting for */
+  function renderFavLines() {
+    var fav = favMilestone();
+    S.habits.forEach(function (h, i) {
+      var el = $("fav" + i); if (!el) return;
+      if (!fav || fav.id === "sayno" || !h.streakStart || Date.now() < h.streakStart) { el.textContent = ""; return; }
+      var label = L().milestones[fav.id];
+      el.textContent = milestoneDone(fav, h.streakStart, h.saidNo) ? "⭐ " + label + " ✓" : "⭐ " + label + " · " + t("msToGo", { t: countdownText(favTarget(fav, h) - Date.now()) });
+    });
   }
   function renderDays() {
     if (!$("days")) return;
@@ -863,41 +927,70 @@
   }
 
   /* ================= slip + check-in ================= */
-  function askSlip() {
-    openModal("<div class='big'>🫂</div><h2>" + t("slipTitle") + "</h2><p class='c'>" + t("slipText") + "</p>" +
+  function askSlip(i) {
+    var h = S.habits[i];
+    openModal("<div class='big'>🫂</div><h2>" + esc(S.habits.length > 1 ? t("slipTitleFor", { habit: habitNameOf(h) }) : t("slipTitle")) + "</h2><p class='c'>" + t("slipText") + "</p>" +
       "<div class='actions'><button id='slipCancel'>" + t("slipCancel") + "</button><button class='danger' id='slipConfirm'>" + t("slipConfirm") + "</button></div>");
     $("slipCancel").addEventListener("click", closeModal);
-    $("slipConfirm").addEventListener("click", relapse);
+    $("slipConfirm").addEventListener("click", function () { relapse([i]); });
   }
-  function relapse() {
-    var ms = Math.max(0, streakMs());
-    S.bestMs = Math.max(S.bestMs, ms); S.restarts++; S.streakStart = Date.now();
+  /* restart the timers of the habits at these positions */
+  function relapse(idxs) {
+    var now = Date.now(), held = 0;
+    idxs.forEach(function (i) {
+      var h = S.habits[i], ms = Math.max(0, now - (h.streakStart || now));
+      held = Math.max(held, ms);
+      h.bestMs = Math.max(h.bestMs, ms); h.restarts++; h.streakStart = now;
+    });
     save(); if (currentTab === "pHome") renderHome();
-    var proof = ms >= 36e5 ? t("relProof", { held: heldText(ms) }) : t("relNew");
+    var proof = held >= 36e5 ? t("relProof", { held: heldText(held) }) : t("relNew");
     openModal("<div class='big'>🌱</div><h2>" + t("relTitle") + "</h2><p class='c'>" + esc(proof) + "</p>" +
       "<p class='c muted'>" + t("relRemember") + "</p><div class='note' style='text-align:center'><i>" + esc(S.why) + "</i></div>" +
-      "<p class='c'>" + t("relRestart") + "</p><div class='actions'><button class='primary' id='okBtn'>" + t("relBtn") + "</button></div>");
+      "<p class='c'>" + t(S.habits.length > idxs.length ? "relRestartSome" : "relRestart") + "</p><div class='actions'><button class='primary' id='okBtn'>" + t("relBtn") + "</button></div>");
     $("okBtn").addEventListener("click", closeModal);
   }
   function openCheckin() {
     openModal("<div class='big'>📝</div><h2>" + t("ciTitle") + "</h2>" +
-      "<p class='c'><b>" + esc(t("ciQ", { habit: habitName() })) + "</b></p>" +
+      "<p class='c'><b>" + esc(t("ciQ", { habit: habitNames() })) + "</b></p>" +
       "<div class='actions'><button class='danger' id='ciNo'>" + t("ciNo") + "</button><button class='primary' id='ciYes'>" + t("ciYes") + "</button></div>" +
       "<div class='actions'><button class='ghost' id='ciLater'>" + t("ciLater") + "</button></div>");
     $("ciYes").addEventListener("click", function () {
       S.checkins[todayStr()] = "yes"; S.lastPrompt = todayStr(); save();
       if (currentTab === "pHome") renderHome();
       confetti();
-      var ms = Math.max(0, streakMs()), d = Math.floor(ms / 864e5);
+      var d = Math.floor(longestStreak() / 864e5);
       openModal("<div class='big'>🎉</div><h2>" + t("yesTitle") + "</h2><p class='c'>" +
         esc(t("yesText", { days: d > 0 ? t("yesDays", { d: L().plural.day(d) }) : "", goals: joinNice(goalLabels()) })) +
         "</p><div class='actions'><button class='primary' id='okBtn'>" + t("thanks") + "</button></div>");
       $("okBtn").addEventListener("click", closeModal);
     });
-    $("ciNo").addEventListener("click", function () { S.checkins[todayStr()] = "no"; S.lastPrompt = todayStr(); relapse(); });
+    $("ciNo").addEventListener("click", function () {
+      if (S.habits.length === 1) { S.checkins[todayStr()] = "no"; S.lastPrompt = todayStr(); relapse([0]); }
+      else askWhichSlipped();
+    });
     $("ciLater").addEventListener("click", function () {
       closeModal();
       if (!S.checkins[todayStr()] && $("checkinBanner")) $("checkinBanner").classList.remove("hidden");
+    });
+  }
+  /* "No" with several habits: ask which ones, and restart only those timers */
+  function askWhichSlipped() {
+    var picked = [];
+    openModal("<div class='big'>🫂</div><h2>" + t("ciWhich") + "</h2><p class='c'>" + t("ciWhichSub") + "</p><div class='opts'>" +
+      S.habits.map(function (h, i) { return "<button class='opt' data-which='" + i + "' aria-pressed='false'>" + EMO[h.key] + " " + esc(habitLabel(h)) + "</button>"; }).join("") +
+      "</div><div class='error' id='whichErr' role='alert'></div><div class='actions'><button id='whichBack'>" + t("back") + "</button><button class='danger' id='whichOk'>" + t("ciWhichBtn") + "</button></div>");
+    $("modal").querySelectorAll("[data-which]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var i = +b.dataset.which, at = picked.indexOf(i);
+        if (at >= 0) picked.splice(at, 1); else picked.push(i);
+        b.classList.toggle("selected", at < 0); b.setAttribute("aria-pressed", String(at < 0));
+      });
+    });
+    $("whichBack").addEventListener("click", openCheckin);
+    $("whichOk").addEventListener("click", function () {
+      if (!picked.length) { $("whichErr").textContent = t("ciWhichErr"); return; }
+      S.checkins[todayStr()] = "no"; S.lastPrompt = todayStr();
+      relapse(picked.sort());
     });
   }
   /* in-app fallback: if the app is open when the check-in time passes */
@@ -918,7 +1011,7 @@
 
   /* ================= why page ================= */
   function whyLines() {
-    var lines = [], d = Math.floor(Math.max(0, streakMs()) / 864e5), goals = goalLabels();
+    var lines = [], d = Math.floor(longestStreak() / 864e5), goals = goalLabels();
     lines.push(t("wlCrit", { crit: S.critical }));
     if (goals.length) lines.push(t("wlGoals", { goals: joinNice(goals) }));
     if (S.improve.trim()) lines.push(t("wlImprove", { improve: S.improve.trim() }));
@@ -939,7 +1032,7 @@
         (S.about.trim() ? "<div><span>" + t("whyAbout") + "</span><p>" + esc(S.about) + "</p></div>" : "") +
       "</div></div>";
     if (editing) {
-      html += "<div class='card'><h3>" + t("whyFocus") + "</h3><ul class='focus-list'>" + focusPrompts().map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul>" +
+      html += "<div class='card'><p class='note' style='margin-top:0'>💡 " + esc(whyHint()) + "</p>" +
         "<label class='field' for='whyEdit'>" + t("mySentence") + "</label><textarea id='whyEdit' maxlength='280'>" + esc(S.why) + "</textarea>" +
         "<div class='error' id='whyErr'></div><div class='actions' style='margin-top:10px'><button id='whyCancel'>" + t("cancel") + "</button><button class='primary' id='whySave'>" + t("save") + "</button></div></div>";
     } else {
@@ -977,11 +1070,12 @@
         "</b><small>" + esc(a.source) + " · " + t("type_" + a.type) + badge + "</small>" + (about ? "<small class='about'>" + esc(about) + "</small>" : "") + "</span><span class='ext' aria-hidden='true'>↗</span></a>";
     }
     function section(title, items) { return items.length ? "<div class='section-title'>" + esc(title) + "</div><div class='art-list'>" + items.map(item).join("") + "</div>" : ""; }
-    var mine = list.filter(function (a) { return a.habits.indexOf(S.habit) >= 0; });
-    var gen = list.filter(function (a) { return a.habits.indexOf("general") >= 0 && a.habits.indexOf(S.habit) < 0; });
+    var keys = S.habits.map(function (h) { return h.key; });
+    var mine = list.filter(function (a) { return a.habits.some(function (k) { return keys.indexOf(k) >= 0; }); });
+    var gen = list.filter(function (a) { return a.habits.indexOf("general") >= 0 && mine.indexOf(a) < 0; });
     html += section(t("forYou"), mine) + section(t("general"), gen);
     HABIT_ORDER.forEach(function (h) {
-      if (h === S.habit || h === "other") return;
+      if (keys.indexOf(h) >= 0 || h === "other") return;
       var items = list.filter(function (a) { return a.habits[0] === h && mine.indexOf(a) < 0; });
       html += section(EMO[h] + " " + L().habits[h].label, items);
     });
@@ -1131,16 +1225,21 @@
   function syncNow() {
     if (!FB.ready || !S.setupDone) return Promise.resolve();
     var tz = "UTC"; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch (e) {}
+    var first = S.habits[0] || {}, restarts = S.habits.reduce(function (n, h) { return n + (h.restarts || 0); }, 0);
     var jobs = [FB.db.collection("users").doc(FB.uid).set({
-      lang: S.lang, habit: S.habit, reminderTime: S.reminderTime, tz: tz,
-      notify: !!S.notify, fcmToken: S.fcmToken || null,
-      streakStart: S.streakStart, bestMs: S.bestMs, restarts: S.restarts, checkinsYes: checkinsYes(),
+      lang: S.lang, habit: first.key || null, habits: S.habits.map(function (h) { return h.key; }),
+      streaks: S.habits.map(function (h) { return { habit: h.key, streakStart: h.streakStart, bestMs: h.bestMs || 0 }; }),
+      streakStart: first.streakStart || null, bestMs: S.habits.reduce(function (m, h) { return Math.max(m, h.bestMs || 0); }, 0),
+      restarts: restarts, reminderTime: S.reminderTime, tz: tz,
+      notify: !!S.notify, fcmToken: S.fcmToken || null, checkinsYes: checkinsYes(),
       lastCheckinDate: lastCheckinDate(), updatedAt: Date.now()
     }, { merge: true })];
     if (S.shareId) jobs.push(FB.db.collection("shares").doc(S.shareId).set({
-      owner: FB.uid, name: S.name.trim().split(/\s+/)[0] || "", habit: S.habit, habitOther: S.habit === "other" ? S.habitOther : "",
-      streakStart: S.streakStart, bestMs: S.bestMs, restarts: S.restarts, checkinsYes: checkinsYes(),
-      saidNo: !!S.saidNo, updatedAt: Date.now()
+      owner: FB.uid, name: S.name.trim().split(/\s+/)[0] || "",
+      habits: S.habits.map(function (h) {
+        return { habit: h.key, habitOther: h.key === "other" ? h.other : "", streakStart: h.streakStart, bestMs: h.bestMs || 0, saidNo: !!h.saidNo };
+      }),
+      restarts: restarts, checkinsYes: checkinsYes(), updatedAt: Date.now()
     }));
     return Promise.all(jobs).catch(function () {});
   }
@@ -1172,7 +1271,7 @@
     if (!FB.ready) { toast(t("shareOffline")); return; }
     if (!S.shareId) { S.shareId = randomId(10); save(); }
     syncNow().then(function () {
-      var url = shareUrl(), text = t("shareText", { habit: habitName() });
+      var url = shareUrl(), text = t("shareText", { habit: habitNames() });
       var wa = "https://wa.me/?text=" + encodeURIComponent(text + " " + url);
       openModal("<div class='big'>🔗</div><h2>" + t("shareCardTitle") + "</h2><p class='c small muted'>" + t("shareCardSub") + "</p>" +
         "<div class='linkbox' id='shareLink'>" + esc(url) + "</div>" +
@@ -1198,24 +1297,33 @@
   function ctaHtml() { return "<div class='actions'><button class='primary' id='svCta'>" + t("svCta") + "</button></div>"; }
   function bindCta() { $("svCta").addEventListener("click", function () { history.replaceState(null, "", location.pathname); route(); }); }
   function drawShareView(d) {
-    var label = d.habit === "other" ? (d.habitOther || L().habits.other.label) : (L().habits[d.habit] || L().habits.other).label;
-    var reached = MILESTONES.filter(function (m) { return milestoneDone(m, d.streakStart, d.saidNo); });
+    /* older links stored one habit at the top level */
+    var list = Array.isArray(d.habits) && d.habits.length ? d.habits
+      : [{ habit: d.habit, habitOther: d.habitOther, streakStart: d.streakStart, bestMs: d.bestMs, saidNo: d.saidNo }];
+    function lab(x) { return x.habit === "other" ? (x.habitOther || L().habits.other.label) : (L().habits[x.habit] || L().habits.other).label; }
+    var names = joinNice(list.map(lab)), emos = list.map(function (x) { return EMO[x.habit] || "✨"; }).join("");
     $("shareView").innerHTML =
-      "<div class='card why-big'><span class='eyebrow'>" + t("svSub") + "</span>" + (EMO[d.habit] || "✨") + " " + esc(d.name ? t("svTitle", { name: d.name, habit: label }) : t("svTitleNoName", { habit: label })) + "</div>" +
-      "<div class='card'><div class='timer'>" +
-        "<div><b id='svD'>0</b><span>" + t("days") + "</span></div><div><b id='svH'>0</b><span>" + t("hours") + "</span></div>" +
-        "<div><b id='svM'>0</b><span>" + t("min") + "</span></div><div><b id='svS'>0</b><span>" + t("sec") + "</span></div></div>" +
-        "<div class='stats'>" + stat(t("dh", { d: Math.floor(Math.max(d.bestMs || 0, Date.now() - d.streakStart) / 864e5), h: Math.floor(Math.max(d.bestMs || 0, Date.now() - d.streakStart) / 36e5) % 24 }), t("svBest")) +
-        stat(d.checkinsYes || 0, t("svCheckins")) + "</div></div>" +
-      "<div class='card'><h3>" + t("svMs") + "</h3>" + (reached.length ? "<div class='badges'>" + reached.map(function (m) {
-        return "<div class='badge done'><span class='emo'>" + m.emo + "</span>" + esc(L().milestones[m.id]) + "</div>"; }).join("") + "</div>" : "<p class='muted'>" + t("svNone") + "</p>") + "</div>" + ctaHtml();
+      "<div class='card why-big'><span class='eyebrow'>" + t("svSub") + "</span>" + emos + " " + esc(d.name ? t("svTitle", { name: d.name, habit: names }) : t("svTitleNoName", { habit: names })) + "</div>" +
+      list.map(function (x, i) {
+        var cur = Math.max(0, Date.now() - x.streakStart), best = Math.max(x.bestMs || 0, cur);
+        var reached = MILESTONES.filter(function (m) { return milestoneDone(m, x.streakStart, x.saidNo); });
+        return "<div class='card'><div class='hc-head'><span class='emo'>" + (EMO[x.habit] || "✨") + "</span><h3>" + esc(lab(x)) + "</h3></div><div class='timer'>" +
+          "<div><b id='svD" + i + "'>0</b><span>" + t("days") + "</span></div><div><b id='svH" + i + "'>0</b><span>" + t("hours") + "</span></div>" +
+          "<div><b id='svM" + i + "'>0</b><span>" + t("min") + "</span></div><div><b id='svS" + i + "'>0</b><span>" + t("sec") + "</span></div></div>" +
+          "<div class='stats' style='grid-template-columns:1fr'>" + stat(t("dh", { d: Math.floor(best / 864e5), h: Math.floor(best / 36e5) % 24 }), t("svBest")) + "</div>" +
+          "<h3 style='margin-top:14px'>" + t("svMs") + "</h3>" + (reached.length ? "<div class='badges'>" + reached.map(function (m) {
+            return "<div class='badge done'><span class='emo'>" + m.emo + "</span>" + esc(L().milestones[m.id]) + "</div>"; }).join("") + "</div>" : "<p class='muted'>" + t("svNone") + "</p>") + "</div>";
+      }).join("") +
+      "<div class='card'><div class='stats' style='grid-template-columns:1fr'>" + stat(d.checkinsYes || 0, t("svCheckins")) + "</div></div>" + ctaHtml();
     bindCta();
     clearInterval(shareTimer);
     function upd() {
-      if (!$("svD")) { clearInterval(shareTimer); return; }
-      var a = Math.max(0, Date.now() - d.streakStart);
-      $("svD").textContent = Math.floor(a / 864e5); $("svH").textContent = Math.floor(a / 36e5) % 24;
-      $("svM").textContent = Math.floor(a / 6e4) % 60; $("svS").textContent = Math.floor(a / 1e3) % 60;
+      if (!$("svD0")) { clearInterval(shareTimer); return; }
+      list.forEach(function (x, i) {
+        var a = Math.max(0, Date.now() - x.streakStart);
+        $("svD" + i).textContent = Math.floor(a / 864e5); $("svH" + i).textContent = Math.floor(a / 36e5) % 24;
+        $("svM" + i).textContent = Math.floor(a / 6e4) % 60; $("svS" + i).textContent = Math.floor(a / 1e3) % 60;
+      });
     }
     upd(); shareTimer = setInterval(upd, 1000);
   }

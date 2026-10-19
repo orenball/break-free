@@ -109,6 +109,7 @@
   .lang-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
   .lang-btns button { min-height: 96px; font-size: 20px; flex-direction: column; }
   .lang-btns small { font-size: 13px; color: var(--muted); }
+  .gender-btns button { min-height: 72px; }
 
   /* home */
   .why-card { font-size: 18px; font-style: italic; text-align: center; padding: 18px 20px; background: var(--accent-soft); border: none; }
@@ -218,12 +219,19 @@
   <!-- LANGUAGE -->
   <section id="langScreen" class="hidden">
     <div class="card">
-      <h2>Choose your language · בחרו שפה</h2>
-      <p class="sub">You can change it later · אפשר לשנות אחר כך</p>
+      <h2>Choose your language · בחירת שפה</h2>
+      <p class="sub">You can change these later in your profile · אפשר לשנות אחר כך בפרופיל</p>
       <div class="lang-btns">
-        <button id="langEn" data-lang="en">English<small>Left to right</small></button>
-        <button id="langHe" data-lang="he">עברית<small>מימין לשמאל</small></button>
+        <button data-lang="en" aria-pressed="false">English<small>Left to right</small></button>
+        <button data-lang="he" aria-pressed="false">עברית<small>מימין לשמאל</small></button>
       </div>
+      <h2 style="margin-top:22px">I am · אני</h2>
+      <div class="lang-btns gender-btns">
+        <button data-gender="m" aria-pressed="false">Male<small>זכר</small></button>
+        <button data-gender="f" aria-pressed="false">Female<small>נקבה</small></button>
+      </div>
+      <div class="error" id="langErr" role="alert"></div>
+      <div class="nav"><span></span><button class="primary" id="langNext">Continue · המשך</button></div>
     </div>
   </section>
 
@@ -303,7 +311,7 @@
   /* ================= state ================= */
   function blankState() {
     return {
-      lang: null, setupDone: false,
+      lang: null, gender: null, setupDone: false,
       name: "", age: "", about: "",
       habits: [], currency: "₪",
       goals: [], goalOther: "", improve: "", critical: 7, belief: null,
@@ -350,7 +358,18 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
-  function L() { return window.BF_I18N[S.lang || "en"]; }
+  /* Hebrew text marks gendered words as [[male|female]]; pick the form for this user. */
+  var packCache = {};
+  function genderize(v, fem) {
+    if (typeof v === "string") return v.replace(/\[\[([^|\]]*)\|([^\]]*)\]\]/g, function (_, m, f) { return fem ? f : m; });
+    if (Array.isArray(v)) return v.map(function (x) { return genderize(x, fem); });
+    if (v && typeof v === "object") { var o = {}; for (var k in v) o[k] = genderize(v[k], fem); return o; }
+    return v;
+  }
+  function L() {
+    var lang = S.lang || "en", fem = S.gender === "f", key = lang + (fem ? "f" : "m");
+    return packCache[key] || (packCache[key] = genderize(window.BF_I18N[lang], fem));
+  }
   function t(key, vars) {
     var s = L().ui[key];
     if (s == null) s = window.BF_I18N.en.ui[key] || key;
@@ -366,7 +385,7 @@
   function habitNameOf(h) {
     if (h.key === "other") return h.other || hab("other").label;
     var x = hab(h.key);
-    return S.lang === "he" ? (x.short || x.label) : (x.short || x.label).toLowerCase();
+    return x.short || (S.lang === "he" ? x.label : x.label.toLowerCase());
   }
   function habitNames() { return joinNice(S.habits.map(habitNameOf)); }
   function goalLabels() {
@@ -433,10 +452,17 @@
     document.documentElement.dir = window.BF_I18N[l].dir;
     document.querySelectorAll("[data-t]").forEach(function (el) { el.textContent = t(el.getAttribute("data-t")); });
   }
-  document.querySelectorAll("[data-lang]").forEach(function (b) {
-    b.addEventListener("click", function () {
-      S.lang = b.getAttribute("data-lang"); save(); applyLang(); route();
-    });
+  /* first screen: language + male/female, then Continue */
+  var pick = { lang: null, gender: null };
+  function drawPicks() {
+    document.querySelectorAll("[data-lang]").forEach(function (b) { var on = b.dataset.lang === pick.lang; b.classList.toggle("selected", on); b.setAttribute("aria-pressed", String(on)); });
+    document.querySelectorAll("[data-gender]").forEach(function (b) { var on = b.dataset.gender === pick.gender; b.classList.toggle("selected", on); b.setAttribute("aria-pressed", String(on)); });
+  }
+  document.querySelectorAll("[data-lang]").forEach(function (b) { b.addEventListener("click", function () { pick.lang = b.dataset.lang; $("langErr").textContent = ""; drawPicks(); }); });
+  document.querySelectorAll("[data-gender]").forEach(function (b) { b.addEventListener("click", function () { pick.gender = b.dataset.gender; $("langErr").textContent = ""; drawPicks(); }); });
+  $("langNext").addEventListener("click", function () {
+    if (!pick.lang || !pick.gender) { $("langErr").textContent = !pick.lang ? "Choose a language · בחרו שפה" : "Choose male or female · בחרו זכר או נקבה"; return; }
+    S.lang = pick.lang; S.gender = pick.gender; save(); applyLang(); route();
   });
 
   /* ================= setup steps ================= */
@@ -760,7 +786,7 @@
     $("tabbar").classList.add("hidden");
     $("greet").textContent = "";
     if (shareMatch) { if (!S.lang) S.lang = (navigator.language || "").indexOf("he") === 0 ? "he" : "en"; applyLang(); showShareView(shareMatch[1]); return; }
-    if (!S.lang) { $("langScreen").classList.remove("hidden"); return; }
+    if (!S.lang || !S.gender) { pick.lang = S.lang; pick.gender = S.gender; drawPicks(); $("langScreen").classList.remove("hidden"); return; }
     if (!S.setupDone) { $("setup").classList.remove("hidden"); renderStep(); return; }
     $("app").classList.remove("hidden"); $("tabbar").classList.remove("hidden");
     showTab(currentTab);
@@ -1140,6 +1166,7 @@
         "<label class='field' for='prAge'>" + t("age") + "</label><input type='number' id='prAge' min='10' max='120' inputmode='numeric' value='" + esc(S.age) + "'>" +
         "<label class='field' for='prAbout'>" + t("about") + "</label><textarea id='prAbout' maxlength='500' placeholder='" + esc(t("aboutPh")) + "'>" + esc(S.about) + "</textarea>" +
         "<div class='row'><div><label class='field' for='prLang'>" + t("language") + "</label><select id='prLang'><option value='en'" + (S.lang === "en" ? " selected" : "") + ">English</option><option value='he'" + (S.lang === "he" ? " selected" : "") + ">עברית</option></select></div>" +
+        "<div><label class='field' for='prGender'>" + t("gender") + "</label><select id='prGender'><option value='m'" + (S.gender !== "f" ? " selected" : "") + ">" + t("male") + "</option><option value='f'" + (S.gender === "f" ? " selected" : "") + ">" + t("female") + "</option></select></div>" +
         "<div><label class='field' for='prTime'>" + t("remTime") + "</label><input type='time' id='prTime' value='" + esc(S.reminderTime) + "'></div>" +
         "<div><label class='field' for='prCur'>" + t("currency") + "</label>" + currencySelect().replace("id='currency'", "id='prCur'") + "</div></div>" +
         "<div class='error' id='prErr'></div><div class='actions' style='margin-top:8px'><button class='primary' id='prSave'>" + t("save") + "</button></div></div>" +
@@ -1151,12 +1178,12 @@
       var name = $("prName").value.trim(), age = $("prAge").value, a = +age;
       if (!name) { $("prErr").textContent = t("errName"); return; }
       if (!age || isNaN(a) || a < 10 || a > 120) { $("prErr").textContent = t("errAge"); return; }
-      var newTime = $("prTime").value || S.reminderTime, langChanged = $("prLang").value !== S.lang;
+      var newTime = $("prTime").value || S.reminderTime, langChanged = $("prLang").value !== S.lang || $("prGender").value !== S.gender;
       if (newTime !== S.reminderTime) {
         S.reminderTime = newTime;
         S.lastPrompt = (reminderTsFor(new Date()) <= Date.now() || S.checkins[todayStr()]) ? todayStr() : null;
       }
-      S.name = name; S.age = age; S.about = $("prAbout").value; S.currency = $("prCur").value; S.lang = $("prLang").value;
+      S.name = name; S.age = age; S.about = $("prAbout").value; S.currency = $("prCur").value; S.lang = $("prLang").value; S.gender = $("prGender").value;
       save(); if (langChanged) applyLang(); showTab("pProfile"); toast(t("saved"));
     });
     if ($("notifOnBtn")) $("notifOnBtn").addEventListener("click", enablePush);

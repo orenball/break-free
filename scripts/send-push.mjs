@@ -22,7 +22,8 @@ const BAD_TOKEN_CODES = new Set([
 
 const TEXT = {
   en: { title: "Break Free", body: "Did you get through today without giving in? Tap to check in." },
-  he: { title: "Break Free", body: "עברת את היום בלי להישבר? לחצו כדי לעשות צ'ק-אין." },
+  // written so it reads correctly for both men and women
+  he: { title: "Break Free", body: "הצלחת לעבור את היום בלי להישבר? לחיצה כאן לצ'ק-אין היומי." },
 };
 
 /* ---------- pure logic (exercised by --dry-run) ---------- */

@@ -1,0 +1,16 @@
+{
+  "name": "break-free-push",
+  "private": true,
+  "type": "module",
+  "description": "Sends Break Free's daily check-in notification and computes community stats.",
+  "scripts": {
+    "push": "node send-push.mjs",
+    "dry-run": "node send-push.mjs --dry-run"
+  },
+  "dependencies": {
+    "firebase-admin": "12.7.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

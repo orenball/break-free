@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Break Free</title>
+<meta name="description" content="Break free from a bad habit: a clean-time timer, daily check-ins, milestones and support.">
+<meta name="theme-color" content="#2f8f6b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Break Free">
+<style>
+  /* Calm "recovery green" palette; one column, cards, bottom tab bar */
+  :root {
+    --bg: #f3f6f4; --panel: #ffffff; --panel-2: #eef3f0; --text: #1d2a25; --muted: #5f7069;
+    --border: #dbe4df; --accent: #2f8f6b; --accent-2: #3aa77e; --accent-soft: #dff1e9; --accent-text: #ffffff;
+    --warn: #c9463f; --warn-soft: #fbe6e5; --gold: #c98f12; --gold-soft: #fbf0d5;
+    --shadow: 0 6px 20px rgba(20, 40, 30, 0.10); --overlay: rgba(10, 20, 15, 0.55);
+    --nav-h: 64px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101613; --panel: #19221e; --panel-2: #212c27; --text: #e6efea; --muted: #94a59d;
+      --border: #2d3a34; --accent: #46b98d; --accent-2: #5ccc9f; --accent-soft: #1f3a2f; --accent-text: #0d1a14;
+      --warn: #ef6f6a; --warn-soft: #3a2120; --gold: #f0bf4c; --gold-soft: #3a3020;
+      --shadow: 0 6px 20px rgba(0, 0, 0, 0.4); --overlay: rgba(0, 0, 0, 0.65);
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Hebrew", Arial, sans-serif;
+    line-height: 1.5;
+  }
+  .wrap {
+    max-width: 640px; margin: 0 auto;
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(var(--nav-h) + 40px + env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  header.top h1 { font-size: 22px; margin: 0; letter-spacing: -0.3px; }
+  header.top h1 span { color: var(--accent); }
+  .greet { color: var(--muted); font-size: 15px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 20px; box-shadow: var(--shadow); margin-bottom: 16px; }
+  h2 { font-size: 21px; margin: 0 0 6px; text-wrap: balance; }
+  h3 { font-size: 16px; margin: 0 0 10px; }
+  p.sub { color: var(--muted); margin: 0 0 16px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 13px; }
+
+  button, a.btn {
+    font: inherit; cursor: pointer; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--panel-2); color: var(--text); padding: 11px 16px; min-height: 44px;
+    text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-align: center;
+  }
+  button:hover, a.btn:hover { border-color: var(--accent); }
+  button:focus-visible, a.btn:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .primary { background: var(--accent) !important; border-color: var(--accent) !important; color: var(--accent-text) !important; font-weight: 600; }
+  .danger { background: var(--warn) !important; border-color: var(--warn) !important; color: #fff !important; font-weight: 600; }
+  .ghost { background: transparent; }
+
+  input[type=text], input[type=number], input[type=date], input[type=time], textarea, select {
+    font: inherit; width: 100%; padding: 11px 12px; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--panel-2); color: var(--text);
+  }
+  textarea { min-height: 90px; resize: vertical; }
+  label.field { display: block; margin: 12px 0 6px; font-weight: 600; font-size: 14px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row > * { flex: 1 1 140px; min-width: 0; }
+  .row > select { flex: 0 0 84px; }
+
+  .progress { height: 8px; background: var(--panel-2); border-radius: 99px; overflow: hidden; margin-bottom: 8px; }
+  .progress > div { height: 100%; background: var(--accent); transition: width 0.3s; }
+  .step-label { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .tile { flex-direction: column; gap: 4px; padding: 14px 8px; border-radius: 14px; }
+  .tile .emo { font-size: 28px; line-height: 1; }
+  .selected { background: var(--accent-soft) !important; border-color: var(--accent) !important; box-shadow: inset 0 0 0 1px var(--accent); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border-radius: 99px; padding: 9px 14px; min-height: 40px; }
+  .opts { display: flex; flex-direction: column; gap: 8px; }
+  .opt { justify-content: flex-start; text-align: start; }
+  .nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px; }
+  .error { color: var(--warn); font-size: 14px; margin-top: 10px; min-height: 1em; }
+  .note { background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; margin-top: 12px; font-size: 15px; }
+  .note.gold { background: var(--gold-soft); }
+
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .range-val { font-size: 34px; font-weight: 700; text-align: center; color: var(--accent); }
+  .range-text { text-align: center; color: var(--muted); }
+
+  .focus-list { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 8px; }
+  .focus-list li { background: var(--panel-2); border-radius: 12px; padding: 10px 12px; font-size: 14px; display: flex; gap: 8px; }
+  .focus-list li::before { content: "💡"; }
+
+  .summary { margin: 0; }
+  .summary dt { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .summary dd { margin: 2px 0 0; font-weight: 500; overflow-wrap: anywhere; }
+
+  /* language screen */
+  .lang-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+  .lang-btns button { min-height: 96px; font-size: 20px; flex-direction: column; }
+  .lang-btns small { font-size: 13px; color: var(--muted); }
+
+  /* home */
+  .why-card { font-size: 18px; font-style: italic; text-align: center; padding: 18px 20px; background: var(--accent-soft); border: none; }
+  .eyebrow { display: block; font-style: normal; font-size: 12px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+  .timer { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; margin: 8px 0 16px; }
+  .timer div { background: var(--panel-2); border-radius: 14px; padding: 12px 4px; }
+  .timer b { display: block; font-size: 34px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .timer span { font-size: 12px; color: var(--muted); }
+  .timer-title { text-align: center; color: var(--muted); font-size: 14px; }
+  .quote { font-size: 17px; }
+  .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat { background: var(--panel-2); border-radius: 14px; padding: 12px; min-width: 0; }
+  .stat b { font-size: 22px; display: block; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: 13px; color: var(--muted); }
+  .badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+  .badge { border: 1px dashed var(--border); border-radius: 14px; padding: 10px; text-align: center; font-size: 13px; color: var(--muted); }
+  .badge .emo { font-size: 24px; display: block; filter: grayscale(1); opacity: 0.5; }
+  .badge.done { border-style: solid; border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+  .badge.done .emo { filter: none; opacity: 1; }
+  .badge.fav { box-shadow: 0 0 0 2px var(--gold); }
+  .fav-box { background: var(--gold-soft); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .day { text-align: center; border-radius: 10px; padding: 6px 2px; background: var(--panel-2); font-size: 12px; }
+  .day b { display: block; font-size: 18px; }
+  .day.yes { background: var(--accent-soft); }
+  .day.no { background: var(--warn-soft); }
+  .day.today { outline: 2px solid var(--accent); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+  .actions > * { flex: 1 1 150px; }
+
+  /* why page */
+  .why-big { font-size: 24px; line-height: 1.35; font-weight: 600; text-align: center; padding: 28px 20px; background: var(--accent-soft); border: none; text-wrap: balance; }
+  .why-line { font-size: 18px; text-align: center; background: var(--gold-soft); border: none; }
+  .kv { display: grid; gap: 14px; }
+  .kv div span { display: block; font-size: 13px; color: var(--muted); }
+  .kv div p { margin: 2px 0 0; overflow-wrap: anywhere; }
+
+  /* learn */
+  .art-list { display: flex; flex-direction: column; gap: 8px; }
+  a.art, .art { justify-content: flex-start; text-align: start; gap: 12px; padding: 12px 14px; }
+  .art .emo { font-size: 26px; flex: 0 0 auto; }
+  .art b { display: block; }
+  .art small { color: var(--muted); display: block; }
+  .art small.about { color: var(--text); margin-top: 2px; }
+  .art > span:nth-child(2) { flex: 1 1 auto; min-width: 0; }
+  .art .ext { color: var(--muted); flex: 0 0 auto; }
+  [dir=rtl] .art .ext { transform: scaleX(-1); }
+  .article h2 { margin-bottom: 4px; }
+  .article h3 { margin-top: 20px; }
+  .article p { margin: 0 0 10px; }
+  .section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 18px 0 8px; }
+
+  /* community */
+  .bars { display: flex; flex-direction: column; gap: 8px; }
+  .bar { display: grid; grid-template-columns: minmax(90px, 40%) 1fr auto; gap: 8px; align-items: center; font-size: 14px; }
+  .bar .track { height: 12px; background: var(--panel-2); border-radius: 99px; overflow: hidden; }
+  .bar .fill { height: 100%; background: var(--accent); border-radius: 99px; }
+  .bar b { font-variant-numeric: tabular-nums; }
+
+  /* tab bar */
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    background: var(--panel); border-top: 1px solid var(--border);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px);
+  }
+  .tabbar-inner { max-width: 640px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); }
+  .tab { background: none; border: none; border-radius: 0; min-height: var(--nav-h); flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); padding: 6px 2px; }
+  .tab .ico { font-size: 22px; line-height: 1; }
+  .tab.active { color: var(--accent); font-weight: 700; }
+
+  /* modal + toast */
+  .overlay { position: fixed; inset: 0; background: var(--overlay); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .overlay.show { display: flex; }
+  .modal { background: var(--panel); border-radius: 20px; padding: 22px; max-width: 460px; width: 100%; box-shadow: var(--shadow); max-height: 90vh; overflow-y: auto; }
+  .modal .big { font-size: 44px; text-align: center; }
+  .modal h2, .modal p.c { text-align: center; }
+  .modal .actions { margin-top: 16px; }
+  .linkbox { font-size: 13px; background: var(--panel-2); border-radius: 10px; padding: 10px; overflow-wrap: anywhere; direction: ltr; text-align: left; user-select: all; }
+  .banner { background: var(--gold-soft); border: 1px solid var(--gold); border-radius: 14px; padding: 12px 14px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .banner span { flex: 1 1 200px; }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(200px); background: var(--text); color: var(--bg);
+    padding: 12px 18px; border-radius: 12px; transition: transform 0.3s; z-index: 60; max-width: calc(100% - 32px); text-align: center;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .confetti { position: fixed; top: -20px; width: 10px; height: 14px; z-index: 70; pointer-events: none; border-radius: 2px; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(105vh) rotate(720deg); opacity: 0.7; } }
+  @media (prefers-reduced-motion: reduce) { .confetti { display: none; } .toast, .progress > div { transition: none; } }
+  .hidden { display: none !important; }
+  @media (max-width: 420px) { .timer b { font-size: 26px; } .card { padding: 16px; } .why-big { font-size: 21px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Break <span>Free</span></h1>
+    <div class="greet" id="greet"></div>
+  </header>
+
+  <!-- LANGUAGE -->
+  <section id="langScreen" class="hidden">
+    <div class="card">
+      <h2>Choose your language · בחרו שפה</h2>
+      <p class="sub">You can change it later · אפשר לשנות אחר כך</p>
+      <div class="lang-btns">
+        <button id="langEn" data-lang="en">English<small>Left to right</small></button>
+        <button id="langHe" data-lang="he">עברית<small>מימין לשמאל</small></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="setup" class="hidden">
+    <div class="card">
+      <div class="progress"><div id="progBar"></div></div>
+      <div class="step-label" id="stepLabel"></div>
+      <div id="stepBody"></div>
+      <div class="error" id="stepError" role="alert"></div>
+      <div class="nav">
+        <button id="backBtn"></button>
+        <button id="nextBtn" class="primary"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- APP PAGES -->
+  <section id="app" class="hidden">
+    <div id="pHome" class="page"></div>
+    <div id="pWhy" class="page hidden"></div>
+    <div id="pLearn" class="page hidden"></div>
+    <div id="pComm" class="page hidden"></div>
+    <div id="pProfile" class="page hidden"></div>
+  </section>
+
+  <!-- PUBLIC SHARE PAGE -->
+  <section id="shareView" class="hidden"></section>
+</div>
+
+<nav class="tabbar hidden" id="tabbar">
+  <div class="tabbar-inner">
+    <button class="tab" data-tab="pHome"><span class="ico">🏠</span><span data-t="tabHome"></span></button>
+    <button class="tab" data-tab="pWhy"><span class="ico">💚</span><span data-t="tabWhy"></span></button>
+    <button class="tab" data-tab="pLearn"><span class="ico">📖</span><span data-t="tabLearn"></span></button>
+    <button class="tab" data-tab="pComm"><span class="ico">👥</span><span data-t="tabCommunity"></span></button>
+    <button class="tab" data-tab="pProfile"><span class="ico">👤</span><span data-t="tabProfile"></span></button>
+  </div>
+</nav>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="i18n.js"></script>
+<script src="articles.js" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
+<script src="firebase-config.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  /* ================= constants ================= */
+  var KEY = "breakFree.app.v1";
+  var FB_VER = "10.12.2";
+  var EMO = {
+    alcohol: "🍺", cigarettes: "🚬", weed: "🌿", drugs: "💉", pills: "💊", junkfood: "🍔", sweets: "🍬",
+    energy: "⚡", coffee: "☕", porn: "🔞", nailbiting: "😬", betting: "🎰", tiktok: "🎵", reels: "📱", other: "✨"
+  };
+  var HABIT_META = {
+    alcohol: { per: "week", costly: true }, cigarettes: { per: "day", costly: true }, weed: { per: "day", costly: true },
+    drugs: { per: "week", costly: true }, pills: { per: "day", costly: true }, junkfood: { per: "week", costly: true },
+    sweets: { per: "day", costly: true }, energy: { per: "day", costly: true }, coffee: { per: "day", costly: true },
+    porn: { per: "day" }, nailbiting: { choice: true }, betting: { per: "week", money: true },
+    tiktok: { per: "day" }, reels: { per: "day" }, other: { per: "day", costly: true }
+  };
+  var HABIT_ORDER = Object.keys(EMO);
+  var GOAL_IDS = ["happiness", "discipline", "health", "money", "sleep", "time", "relationships", "confidence", "focus"];
+  var BELIEF_IDS = ["yes", "think", "unsure", "scared"];
+  var SHARE_IDS = ["person", "community", "self"];
+  var MILESTONES = [
+    { id: "24h", emo: "🌱", ms: 864e5 }, { id: "morning", emo: "🌅" }, { id: "sayno", emo: "🙅" },
+    { id: "3d", emo: "🔥", ms: 3 * 864e5 }, { id: "1w", emo: "⭐", ms: 7 * 864e5 }, { id: "2w", emo: "🌟", ms: 14 * 864e5 },
+    { id: "1m", emo: "🏅", ms: 30 * 864e5 }, { id: "3m", emo: "🏆", ms: 90 * 864e5 }, { id: "1y", emo: "👑", ms: 365 * 864e5 }
+  ];
+  var FAV_CHOICES = ["24h", "morning", "sayno", "1w", "1m", "3m", "1y"];
+  var CURRENCIES = ["₪", "$", "€", "£"];
+
+  /* ================= state ================= */
+  function blankState() {
+    return {
+      lang: null, setupDone: false,
+      name: "", age: "", about: "",
+      habit: null, habitOther: "",
+      startDate: todayStr(), startTime: nowTimeStr(),
+      amount: "", amount2: "", freqChoice: "", cost: "", currency: "₪",
+      goals: [], goalOther: "", improve: "", critical: 7, belief: null,
+      share: null, shareName: "", milestone: null, milestoneOther: "",
+      why: "", reminderTime: "20:00",
+      streakStart: null, bestMs: 0, restarts: 0,
+      checkins: {}, saidNo: null, lastPrompt: null,
+      shareId: null, notify: false, fcmToken: null
+    };
+  }
+  var S = load();
+  var step = 0, whyWarned = false, currentTab = "pHome", openArticle = null;
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) { var s = JSON.parse(raw), b = blankState(); for (var k in b) if (!(k in s)) s[k] = b[k]; return s; }
+    } catch (e) {}
+    return blankState();
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+    scheduleSync();
+  }
+
+  /* ================= helpers ================= */
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function L() { return window.BF_I18N[S.lang || "en"]; }
+  function t(key, vars) {
+    var s = L().ui[key];
+    if (s == null) s = window.BF_I18N.en.ui[key] || key;
+    if (vars) for (var k in vars) s = s.split("{" + k + "}").join(vars[k]);
+    return s;
+  }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function dateKey(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function todayStr() { return dateKey(new Date()); }
+  function nowTimeStr() { var d = new Date(); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+  function hab(key) { return L().habits[key || S.habit] || L().habits.other; }
+  function habitLabel(key, other) {
+    key = key || S.habit;
+    if (key === "other") return other != null ? other : (S.habitOther || hab("other").label);
+    return hab(key).label;
+  }
+  function habitName() {
+    if (S.habit === "other") return S.habitOther || hab("other").label;
+    var h = hab();
+    return S.lang === "he" ? (h.short || h.label) : (h.short || h.label).toLowerCase();
+  }
+  function goalLabels() {
+    var list = S.goals.map(function (id) { var g = L().goals[id]; return g ? (S.lang === "he" ? g.label : g.label.toLowerCase()) : id; });
+    if (S.goalOther.trim()) list.push(S.goalOther.trim());
+    return list;
+  }
+  function joinNice(list) {
+    if (list.length <= 1) return list.join("");
+    var and = L().plural.and;
+    return list.slice(0, -1).join(", ") + and + list[list.length - 1];
+  }
+  function milestoneLabel(id) {
+    if (id === "custom") return S.milestoneOther;
+    return L().milestones[id] || "";
+  }
+  function streakMs() { return S.streakStart ? Date.now() - S.streakStart : 0; }
+  function fmtNum(n) { return n >= 100 ? Math.round(n).toLocaleString(L().locale) : (Math.round(n * 10) / 10).toLocaleString(L().locale); }
+  function heldText(ms) {
+    var d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, P = L().plural;
+    if (d > 0) return P.day(d) + (h ? P.and + P.hour(h) : "");
+    return P.hour(h);
+  }
+  function randomId(n) {
+    var a = "abcdefghijkmnpqrstuvwxyz23456789", s = "", r = new Uint32Array(n);
+    (window.crypto || window.msCrypto).getRandomValues(r);
+    for (var i = 0; i < n; i++) s += a[r[i] % a.length];
+    return s;
+  }
+  var toastTimer;
+  function toast(msg) {
+    var el = $("toast"); el.textContent = msg; el.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.classList.remove("show"); }, 3000);
+  }
+  function confetti() {
+    var colors = ["#2f8f6b", "#e0a526", "#5ccc9f", "#e46a8b", "#4f8fdc"];
+    for (var i = 0; i < 60; i++) {
+      var c = document.createElement("div");
+      c.className = "confetti"; c.style.left = Math.random() * 100 + "vw"; c.style.background = colors[i % colors.length];
+      c.style.animationDuration = (1.8 + Math.random() * 1.8) + "s"; c.style.animationDelay = (Math.random() * 0.4) + "s";
+      document.body.appendChild(c);
+      setTimeout(function (el) { el.remove(); }, 4200, c);
+    }
+  }
+  function copyText(text, done) {
+    function fallback() {
+      var ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {} ta.remove(); done();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+    else fallback();
+  }
+
+  function openModal(html) { $("modal").innerHTML = html; $("overlay").classList.add("show"); }
+  function closeModal() { $("overlay").classList.remove("show"); }
+  $("overlay").addEventListener("click", function (e) { if (e.target === $("overlay")) closeModal(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
+
+  /* ================= language ================= */
+  function applyLang() {
+    var l = S.lang || "en";
+    document.documentElement.lang = l;
+    document.documentElement.dir = window.BF_I18N[l].dir;
+    document.querySelectorAll("[data-t]").forEach(function (el) { el.textContent = t(el.getAttribute("data-t")); });
+  }
+  document.querySelectorAll("[data-lang]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      S.lang = b.getAttribute("data-lang"); save(); applyLang(); route();
+    });
+  });
+
+  /* ================= setup steps ================= */
+  function currencySelect() {
+    return "<select id='currency' aria-label='Currency'>" + CURRENCIES.map(function (c) {
+      return "<option" + (S.currency === c ? " selected" : "") + ">" + c + "</option>";
+    }).join("") + "</select>";
+  }
+  function critText(v) { var c = L().crit; return v <= 3 ? c[0] : v <= 6 ? c[1] : v <= 8 ? c[2] : c[3]; }
+
+  var STEPS = [
+    { // profile
+      render: function () {
+        return "<h2>" + t("profTitle") + "</h2><p class='sub'>" + t("profSub") + "</p>" +
+          "<label class='field' for='pName'>" + t("name") + "</label><input type='text' id='pName' maxlength='40' autocomplete='given-name' placeholder='" + esc(t("namePh")) + "' value='" + esc(S.name) + "'>" +
+          "<label class='field' for='pAge'>" + t("age") + "</label><input type='number' id='pAge' min='10' max='120' inputmode='numeric' placeholder='" + esc(t("agePh")) + "' value='" + esc(S.age) + "'>" +
+          "<label class='field' for='pAbout'>" + t("about") + " <span class='muted'>" + t("optional") + "</span></label><textarea id='pAbout' maxlength='500' placeholder='" + esc(t("aboutPh")) + "'>" + esc(S.about) + "</textarea>";
+      },
+      bind: function () {
+        $("pName").addEventListener("input", function () { S.name = this.value; });
+        $("pAge").addEventListener("input", function () { S.age = this.value; });
+        $("pAbout").addEventListener("input", function () { S.about = this.value; });
+      },
+      validate: function () {
+        if (!S.name.trim()) return t("errName");
+        var a = +S.age; if (!S.age || isNaN(a) || a < 10 || a > 120) return t("errAge");
+      }
+    },
+    { // habit
+      render: function () {
+        var html = "<h2>" + t("habitTitle") + "</h2><p class='sub'>" + t("habitSub") + "</p><div class='tiles'>";
+        HABIT_ORDER.forEach(function (k) {
+          html += "<button class='tile" + (S.habit === k ? " selected" : "") + "' data-habit='" + k + "'><span class='emo'>" + EMO[k] + "</span>" + esc(L().habits[k].label) + "</button>";
+        });
+        html += "</div>";
+        if (S.habit === "other") html += "<label class='field' for='habitOther'>" + t("otherWhat") + "</label><input type='text' id='habitOther' maxlength='40' placeholder='" + esc(t("otherPh")) + "' value='" + esc(S.habitOther) + "'>";
+        return html;
+      },
+      bind: function () {
+        document.querySelectorAll("[data-habit]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            if (S.habit !== b.dataset.habit) { S.amount = ""; S.amount2 = ""; S.freqChoice = ""; S.cost = ""; }
+            S.habit = b.dataset.habit; renderStep();
+          });
+        });
+        var o = $("habitOther"); if (o) o.addEventListener("input", function () { S.habitOther = o.value; });
+      },
+      validate: function () {
+        if (!S.habit) return t("errHabit");
+        if (S.habit === "other" && !S.habitOther.trim()) return t("errOther");
+      }
+    },
+    { // start date
+      render: function () {
+        return "<h2>" + t("dateTitle") + "</h2><p class='sub'>" + t("dateSub") + "</p>" +
+          "<div class='row'><div><label class='field' for='sDate'>" + t("startDate") + "</label><input type='date' id='sDate' value='" + esc(S.startDate) + "'></div>" +
+          "<div><label class='field' for='sTime'>" + t("startTime") + "</label><input type='time' id='sTime' value='" + esc(S.startTime) + "'></div></div>" +
+          "<p class='small muted'>" + t("dateTip") + "</p>";
+      },
+      bind: function () {
+        ["input", "change"].forEach(function (ev) {
+          $("sDate").addEventListener(ev, function () { S.startDate = this.value; });
+          $("sTime").addEventListener(ev, function () { S.startTime = this.value; });
+        });
+      },
+      validate: function () { if (!S.startDate) return t("errDate"); if (!S.startTime) S.startTime = "00:00"; }
+    },
+    { // amount
+      render: function () {
+        var h = hab(), m = HABIT_META[S.habit] || {}, html = "<h2>" + t("amtTitle") + "</h2><p class='sub'>" + t("amtSub") + "</p>";
+        if (m.choice) {
+          html += "<label class='field'>" + esc(h.q) + "</label><div class='opts'>";
+          h.choice.forEach(function (c, i) {
+            html += "<button class='opt" + (S.freqChoice === String(i) ? " selected" : "") + "' data-freq='" + i + "'>" + esc(c) + "</button>";
+          });
+          html += "</div>";
+        } else if (m.money) {
+          html += "<label class='field' for='amt'>" + esc(h.q) + "</label><div class='row'><input type='number' id='amt' min='0' step='any' inputmode='decimal' value='" + esc(S.amount) + "' placeholder='200'>" + currencySelect() + "</div>";
+          html += "<label class='field' for='amt2'>" + esc(h.second) + "</label><input type='number' id='amt2' min='0' step='any' inputmode='decimal' value='" + esc(S.amount2) + "' placeholder='5'>";
+        } else {
+          html += "<label class='field' for='amt'>" + esc(h.q) + "</label><input type='number' id='amt' min='0' step='any' inputmode='decimal' value='" + esc(S.amount) + "' placeholder='10'>";
+        }
+        if (m.costly) {
+          html += "<label class='field' for='cost'>" + t("costQ") + " <span class='muted'>" + t("optional") + "</span></label>" +
+            "<div class='row'><input type='number' id='cost' min='0' step='any' inputmode='decimal' value='" + esc(S.cost) + "' placeholder='50'>" + currencySelect() + "</div>";
+        }
+        return html;
+      },
+      bind: function () {
+        document.querySelectorAll("[data-freq]").forEach(function (b) {
+          b.addEventListener("click", function () { S.freqChoice = b.dataset.freq; renderStep(); });
+        });
+        [["amt", "amount"], ["amt2", "amount2"], ["cost", "cost"]].forEach(function (p) {
+          var el = $(p[0]); if (el) el.addEventListener("input", function () { S[p[1]] = el.value; });
+        });
+        var cur = $("currency"); if (cur) cur.addEventListener("change", function () { S.currency = cur.value; });
+      },
+      validate: function () {
+        var m = HABIT_META[S.habit] || {};
+        if (m.choice) { if (S.freqChoice === "") return t("errChoice"); return; }
+        if (S.amount === "" || isNaN(+S.amount) || +S.amount < 0) return t("errNum");
+        if (m.money && (S.amount2 === "" || isNaN(+S.amount2) || +S.amount2 < 0)) return t("errBets");
+      }
+    },
+    { // goals
+      render: function () {
+        var html = "<h2>" + t("goalsTitle") + "</h2><p class='sub'>" + t("goalsSub") + "</p><div class='chips'>";
+        GOAL_IDS.forEach(function (id) {
+          html += "<button class='chip" + (S.goals.indexOf(id) >= 0 ? " selected" : "") + "' data-goal='" + id + "' aria-pressed='" + (S.goals.indexOf(id) >= 0) + "'>" + esc(L().goals[id].label) + "</button>";
+        });
+        html += "</div><label class='field' for='goalOther'>" + t("goalOther") + " <span class='muted'>" + t("optional") + "</span></label><input type='text' id='goalOther' maxlength='40' placeholder='" + esc(t("goalOtherPh")) + "' value='" + esc(S.goalOther) + "'>";
+        return html;
+      },
+      bind: function () {
+        document.querySelectorAll("[data-goal]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var i = S.goals.indexOf(b.dataset.goal);
+            if (i >= 0) S.goals.splice(i, 1); else S.goals.push(b.dataset.goal);
+            b.classList.toggle("selected"); b.setAttribute("aria-pressed", String(i < 0));
+          });
+        });
+        $("goalOther").addEventListener("input", function () { S.goalOther = this.value; });
+      },
+      validate: function () { if (!S.goals.length && !S.goalOther.trim()) return t("errGoal"); }
+    },
+    { // improve
+      render: function () {
+        return "<h2>" + t("improveTitle") + "</h2><p class='sub'>" + esc(t("improveSub")) + "</p><textarea id='improve' maxlength='300' placeholder='" + esc(t("improvePh")) + "'>" + esc(S.improve) + "</textarea>";
+      },
+      bind: function () { $("improve").addEventListener("input", function () { S.improve = this.value; }); },
+      validate: function () { if (!S.improve.trim()) return t("errImprove"); }
+    },
+    { // critical
+      render: function () {
+        return "<h2>" + t("critTitle") + "</h2><p class='sub'>" + t("critSub") + "</p><div class='range-val' id='critVal'>" + S.critical + "</div>" +
+          "<input type='range' id='crit' min='1' max='10' value='" + S.critical + "' aria-label='" + esc(t("critTitle")) + "'><div class='range-text' id='critText'>" + critText(S.critical) + "</div>";
+      },
+      bind: function () {
+        $("crit").addEventListener("input", function () { S.critical = +this.value; $("critVal").textContent = S.critical; $("critText").textContent = critText(S.critical); });
+      },
+      validate: function () {}
+    },
+    { // belief
+      render: function () {
+        var html = "<h2>" + t("beliefTitle") + "</h2><p class='sub'>" + t("beliefSub") + "</p><div class='opts'>";
+        BELIEF_IDS.forEach(function (id) { html += "<button class='opt" + (S.belief === id ? " selected" : "") + "' data-belief='" + id + "'>" + esc(L().belief[id].label) + "</button>"; });
+        html += "</div>";
+        if (S.belief) html += "<div class='note'>" + esc(L().belief[S.belief].reply) + "</div>";
+        return html;
+      },
+      bind: function () { document.querySelectorAll("[data-belief]").forEach(function (b) { b.addEventListener("click", function () { S.belief = b.dataset.belief; renderStep(); }); }); },
+      validate: function () { if (!S.belief) return t("errBelief"); }
+    },
+    { // share
+      render: function () {
+        var html = "<h2>" + t("shareTitle") + "</h2><p class='sub'>" + t("shareSub") + "</p><div class='opts'>";
+        SHARE_IDS.forEach(function (id) { html += "<button class='opt" + (S.share === id ? " selected" : "") + "' data-share='" + id + "'>" + esc(L().share[id]) + "</button>"; });
+        html += "</div>";
+        if (S.share === "person") html += "<label class='field' for='shareName'>" + t("who") + "</label><input type='text' id='shareName' maxlength='40' placeholder='" + esc(t("whoPh")) + "' value='" + esc(S.shareName) + "'>";
+        else if (S.share === "community") html += "<label class='field' for='shareName'>" + t("whichCommunity") + " <span class='muted'>" + t("optional") + "</span></label><input type='text' id='shareName' maxlength='40' placeholder='" + esc(t("communityPh")) + "' value='" + esc(S.shareName) + "'>";
+        else if (S.share === "self") html += "<div class='note'>" + t("selfNote") + "</div>";
+        return html;
+      },
+      bind: function () {
+        document.querySelectorAll("[data-share]").forEach(function (b) {
+          b.addEventListener("click", function () { if (S.share !== b.dataset.share) S.shareName = ""; S.share = b.dataset.share; renderStep(); });
+        });
+        var n = $("shareName"); if (n) n.addEventListener("input", function () { S.shareName = n.value; });
+      },
+      validate: function () {
+        if (!S.share) return t("errShare");
+        if (S.share === "person" && !S.shareName.trim()) return t("errWho");
+      }
+    },
+    { // milestone
+      render: function () {
+        var html = "<h2>" + t("msTitle") + "</h2><p class='sub'>" + t("msSub") + "</p><div class='opts'>";
+        FAV_CHOICES.forEach(function (id) {
+          var m = MILESTONES.filter(function (x) { return x.id === id; })[0];
+          html += "<button class='opt" + (S.milestone === id ? " selected" : "") + "' data-ms='" + id + "'>" + m.emo + " " + esc(L().milestones[id]) + "</button>";
+        });
+        html += "<button class='opt" + (S.milestone === "custom" ? " selected" : "") + "' data-ms='custom'>" + t("msCustom") + "</button></div>";
+        if (S.milestone === "custom") html += "<label class='field' for='msOther'>" + t("msOther") + "</label><input type='text' id='msOther' maxlength='60' placeholder='" + esc(t("msOtherPh")) + "' value='" + esc(S.milestoneOther) + "'>";
+        return html;
+      },
+      bind: function () {
+        document.querySelectorAll("[data-ms]").forEach(function (b) { b.addEventListener("click", function () { S.milestone = b.dataset.ms; renderStep(); }); });
+        var o = $("msOther"); if (o) o.addEventListener("input", function () { S.milestoneOther = o.value; });
+      },
+      validate: function () {
+        if (!S.milestone) return t("errMs");
+        if (S.milestone === "custom" && !S.milestoneOther.trim()) return t("errMsOther");
+      }
+    },
+    { // why
+      render: function () {
+        var html = "<h2>" + t("whyTitle") + "</h2><p class='sub'>" + t("whySub") + "</p>" +
+          "<h3>" + t("whyFocus") + "</h3><ul class='focus-list'>" + focusPrompts().map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul>" +
+          "<label class='field' for='why'>" + t("mySentence") + "</label><textarea id='why' maxlength='280' placeholder='" + esc(t("whyPh")) + "'>" + esc(S.why) + "</textarea>" +
+          "<div class='small muted' id='whyCount'></div>" +
+          "<label class='field' for='remTime'>" + t("remTime") + "</label><input type='time' id='remTime' value='" + esc(S.reminderTime) + "'>" +
+          "<p class='small muted'>" + t("remSub") + "</p>";
+        return html;
+      },
+      bind: function () {
+        $("why").addEventListener("input", function () { S.why = this.value; whyWarned = false; updateWhyCount(); });
+        ["input", "change"].forEach(function (ev) { $("remTime").addEventListener(ev, function () { S.reminderTime = this.value; }); });
+        updateWhyCount();
+      },
+      validate: function () { return validateWhy(S.why) || (!S.reminderTime ? t("errRem") : null); }
+    },
+    { // summary
+      render: function () {
+        var share = S.share === "self" ? t("keepSelf") : L().share[S.share] + (S.shareName ? " — " + S.shareName : "");
+        var rows = [
+          [t("sName"), S.name], [t("sAge"), S.age],
+          [t("sQuit"), EMO[S.habit] + " " + habitLabel()],
+          [t("sStart"), new Date(startTs()).toLocaleString(L().locale, { dateStyle: "full", timeStyle: "short" })],
+          [t("sNow"), usageText()], [t("sAim"), joinNice(goalLabels())], [t("sImprove"), S.improve],
+          [t("sCrit"), S.critical + " / 10"], [t("sBelief"), L().belief[S.belief].label], [t("sShare"), share],
+          [t("sMs"), milestoneLabel(S.milestone)], [t("sWhy"), S.why], [t("sRem"), S.reminderTime]
+        ];
+        return "<h2>" + t("sumTitle") + "</h2><p class='sub'>" + t("sumSub") + "</p><dl class='summary'>" +
+          rows.map(function (r) { return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("") + "</dl>";
+      },
+      bind: function () {}, validate: function () {}
+    }
+  ];
+
+  function focusPrompts() {
+    var list = [];
+    var goals = goalLabels();
+    if (goals.length) list.push(t("fGoal", { goals: joinNice(goals) }));
+    if (S.improve.trim()) list.push(t("fImprove", { improve: S.improve.trim() }));
+    list.push(t("fFor", { who: S.share === "person" && S.shareName.trim() ? S.shareName.trim() : t("fWhoDefault") }));
+    if (S.milestone) list.push(t("fMs", { ms: milestoneLabel(S.milestone) }));
+    list.push(t("fCrit", { crit: S.critical }));
+    list.push(t("fHardDay"));
+    return list;
+  }
+  function mentionsGoal(text) {
+    var tx = text.toLowerCase();
+    var ok = S.goals.some(function (id) {
+      return ["en", "he"].some(function (l) { return window.BF_I18N[l].goals[id].words.some(function (w) { return tx.indexOf(w) >= 0; }); });
+    });
+    if (!ok && S.goalOther.trim()) { var first = S.goalOther.trim().toLowerCase().split(/\s+/)[0]; ok = first.length > 2 && tx.indexOf(first) >= 0; }
+    return ok;
+  }
+  function validateWhy(text) {
+    var w = text.trim();
+    if (w.length < 10) return t("errWhyShort");
+    var sentences = w.split(/[.!?]+/).filter(function (x) { return x.trim().length > 2; }).length;
+    if (sentences > 2 && !whyWarned) { whyWarned = true; return t("errWhyLong"); }
+    if (!mentionsGoal(w) && !whyWarned) { whyWarned = true; return t("errWhyGoal", { goals: joinNice(goalLabels()) }); }
+  }
+  function updateWhyCount() {
+    var el = $("whyCount"); if (!el) return;
+    var w = S.why.trim();
+    el.textContent = t("chars", { n: w.length }) + (w ? " · " + (mentionsGoal(w) ? t("hasGoal") : t("addGoal")) : "");
+  }
+  function startTs() {
+    var p = S.startDate.split("-").map(Number), q = (S.startTime || "00:00").split(":").map(Number);
+    return new Date(p[0], p[1] - 1, p[2], q[0], q[1]).getTime();
+  }
+  function usageText() {
+    var h = hab(), m = HABIT_META[S.habit] || {}, per = L().per;
+    if (m.choice) return h.choice[+S.freqChoice] || "";
+    if (m.money) return S.currency + S.amount + " " + per.week + ", " + S.amount2 + " " + h.unit + " " + per.week;
+    var s = S.amount + " " + h.unit + " " + per[m.per];
+    if (S.cost) s += " (" + S.currency + S.cost + " " + per.week + ")";
+    return s;
+  }
+
+  function renderStep() {
+    var s = STEPS[step];
+    $("stepBody").innerHTML = s.render(); s.bind();
+    $("stepError").textContent = "";
+    $("progBar").style.width = ((step + 1) / STEPS.length * 100) + "%";
+    $("stepLabel").textContent = t("stepOf", { n: step + 1, total: STEPS.length });
+    $("backBtn").textContent = t("back");
+    $("backBtn").style.visibility = "visible";
+    $("nextBtn").textContent = step === STEPS.length - 1 ? t("startJourney") : t("next");
+  }
+  $("nextBtn").addEventListener("click", function () {
+    var err = STEPS[step].validate();
+    if (err) { $("stepError").textContent = err; return; }
+    if (step < STEPS.length - 1) { step++; whyWarned = false; save(); renderStep(); window.scrollTo(0, 0); return; }
+    S.setupDone = true; S.streakStart = startTs();
+    if (reminderTsFor(new Date()) <= Date.now()) S.lastPrompt = todayStr();
+    save(); route(); confetti(); toast(t("toastStart"));
+    setTimeout(function () { offerReminders(); }, 1200);
+  });
+  $("backBtn").addEventListener("click", function () {
+    if (step > 0) { step--; whyWarned = false; renderStep(); }
+    else { S.lang = null; save(); route(); }
+  });
+
+  /* ================= routing ================= */
+  function route() {
+    applyLang();
+    var hash = location.hash || "";
+    var shareMatch = hash.match(/^#share-([a-z0-9]{6,20})$/);
+    ["langScreen", "setup", "app", "shareView"].forEach(function (id) { $(id).classList.add("hidden"); });
+    $("tabbar").classList.add("hidden");
+    $("greet").textContent = "";
+    if (shareMatch) { if (!S.lang) S.lang = (navigator.language || "").indexOf("he") === 0 ? "he" : "en"; applyLang(); showShareView(shareMatch[1]); return; }
+    if (!S.lang) { $("langScreen").classList.remove("hidden"); return; }
+    if (!S.setupDone) { $("setup").classList.remove("hidden"); renderStep(); return; }
+    $("app").classList.remove("hidden"); $("tabbar").classList.remove("hidden");
+    showTab(currentTab);
+    if (hash === "#checkin") { history.replaceState(null, "", location.pathname + location.search); showTab("pHome"); openCheckin(); }
+  }
+  window.addEventListener("hashchange", route);
+
+  function showTab(id) {
+    currentTab = id;
+    document.querySelectorAll(".page").forEach(function (p) { p.classList.toggle("hidden", p.id !== id); });
+    document.querySelectorAll(".tab").forEach(function (b) {
+      var on = b.dataset.tab === id; b.classList.toggle("active", on);
+      if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    });
+    $("greet").textContent = greeting();
+    ({ pHome: renderHome, pWhy: renderWhy, pLearn: renderLearn, pComm: renderComm, pProfile: renderProfile })[id]();
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll(".tab").forEach(function (b) { b.addEventListener("click", function () { openArticle = null; showTab(b.dataset.tab); }); });
+
+  function greeting() {
+    var h = new Date().getHours(), name = S.name.trim();
+    if (!name) return "";
+    var k = h < 5 ? "greetNight" : h < 12 ? "greetMorning" : h < 17 ? "greetAfternoon" : h < 22 ? "greetEvening" : "greetNight";
+    return t(k, { name: name });
+  }
+
+  /* ================= home ================= */
+  function renderHome() {
+    var p = $("pHome");
+    p.innerHTML =
+      "<div id='checkinBanner' class='banner hidden'><span>" + t("ciBanner") + "</span><button class='primary' id='openCheckinBtn'>" + t("ciNow") + "</button></div>" +
+      "<div class='card why-card'><span class='eyebrow'>" + t("whyPageTitle") + "</span>" + esc(S.why) + "</div>" +
+      "<div class='card'><div class='timer-title' id='timerTitle'></div><div class='timer'>" +
+        "<div><b id='tD'>0</b><span>" + t("days") + "</span></div><div><b id='tH'>0</b><span>" + t("hours") + "</span></div>" +
+        "<div><b id='tM'>0</b><span>" + t("min") + "</span></div><div><b id='tS'>0</b><span>" + t("sec") + "</span></div></div>" +
+        "<div class='actions'><button class='primary' id='checkinNowBtn'>" + t("checkinBtn") + "</button><button class='danger' id='slipBtn'>" + t("slipBtn") + "</button></div></div>" +
+      "<div class='card'><h3>" + t("quoteTitle") + "</h3><div class='quote'>“" + esc(todaysQuote()) + "”</div></div>" +
+      "<div class='card'><h3>" + t("progressTitle") + "</h3><div class='stats' id='stats'></div></div>" +
+      "<div class='card'><h3>" + t("milestonesTitle") + "</h3><div class='fav-box' id='favBox'></div><div class='badges' id='badges'></div>" +
+        "<div class='actions' style='margin-top:12px'><button id='saidNoBtn'></button></div></div>" +
+      (S.share !== "self" ? "<div class='card'><h3>" + t("shareCardTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("shareCardSub") + "</p><div class='actions'><button class='primary' id='shareBtn'>" + t("shareBtn") + "</button></div></div>" : "") +
+      "<div class='card'><h3>" + t("daysTitle") + "</h3><div class='days' id='days'></div><p class='small muted' style='margin:10px 0 0'>" + t("daysLegend") + "</p></div>";
+    $("checkinNowBtn").addEventListener("click", openCheckin);
+    $("openCheckinBtn").addEventListener("click", openCheckin);
+    $("slipBtn").addEventListener("click", askSlip);
+    $("saidNoBtn").addEventListener("click", function () { S.saidNo = todayStr(); save(); renderBadges(); confetti(); toast(t("saidNoToast")); });
+    if ($("shareBtn")) $("shareBtn").addEventListener("click", shareProgress);
+    tick(); renderStats(); renderBadges(); renderDays();
+    if (S.lastPrompt === todayStr() && !S.checkins[todayStr()]) $("checkinBanner").classList.remove("hidden");
+    checkReminder();
+  }
+  function todaysQuote() {
+    var list = L().quotes[S.habit] || L().quotes.other, d = new Date();
+    var n = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5);
+    return list[n % list.length];
+  }
+  function tick() {
+    if (!$("tD")) return;
+    var ms = streakMs(), a = Math.abs(ms);
+    $("tD").textContent = Math.floor(a / 864e5); $("tH").textContent = Math.floor(a / 36e5) % 24;
+    $("tM").textContent = Math.floor(a / 6e4) % 60; $("tS").textContent = Math.floor(a / 1e3) % 60;
+    $("timerTitle").textContent = ms < 0 ? t("timerFuture") : t("timerTitle", { habit: habitName() });
+  }
+  function stat(v, l) { return "<div class='stat'><b>" + esc(v) + "</b><span>" + esc(l) + "</span></div>"; }
+  function renderStats() {
+    if (!$("stats")) return;
+    var h = hab(), m = HABIT_META[S.habit] || {}, ms = Math.max(0, streakMs()), days = ms / 864e5, best = Math.max(S.bestMs, ms);
+    var html = stat(t("dh", { d: Math.floor(best / 864e5), h: Math.floor(best / 36e5) % 24 }), t("bestStreak")) +
+      stat(S.restarts, S.restarts === 1 ? t("restartOne") : t("restartMany"));
+    if (!m.choice) {
+      if (m.money) {
+        html += stat("~" + fmtNum((+S.amount2 || 0) / 7 * days), h.avoided);
+        html += stat(S.currency + fmtNum((+S.amount || 0) / 7 * days), t("moneyKept"));
+      } else {
+        var perDay = m.per === "day" ? (+S.amount || 0) : (+S.amount || 0) / 7;
+        html += stat("~" + fmtNum(perDay * days), h.avoided);
+        if (S.cost) html += stat(S.currency + fmtNum((+S.cost) / 7 * days), t("moneySaved"));
+      }
+    }
+    html += stat(checkinsYes(), t("cleanCheckins"));
+    $("stats").innerHTML = html;
+  }
+  function checkinsYes() { return Object.keys(S.checkins).filter(function (k) { return S.checkins[k] === "yes"; }).length; }
+  function firstMorningTs(start) {
+    var s = new Date(start), m = new Date(s.getFullYear(), s.getMonth(), s.getDate(), 7, 0);
+    if (m.getTime() <= start) m.setDate(m.getDate() + 1);
+    return m.getTime();
+  }
+  function milestoneDone(m, start, saidNo) {
+    if (!start) return false;
+    if (m.id === "sayno") return !!saidNo;
+    if (m.id === "morning") return Date.now() >= firstMorningTs(start);
+    return Date.now() - start >= m.ms;
+  }
+  function countdownText(ms) {
+    if (ms < 0) ms = 0;
+    var d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, mi = Math.floor(ms / 6e4) % 60;
+    return d > 0 ? t("cdD", { d: d, h: h }) : h > 0 ? t("cdH", { h: h, m: mi }) : t("cdM", { m: mi });
+  }
+  function renderBadges() {
+    if (!$("badges")) return;
+    $("badges").innerHTML = MILESTONES.map(function (m) {
+      return "<div class='badge" + (milestoneDone(m, S.streakStart, S.saidNo) ? " done" : "") + (S.milestone === m.id ? " fav" : "") + "'><span class='emo'>" + m.emo + "</span>" + esc(L().milestones[m.id]) + "</div>";
+    }).join("");
+    var fav = MILESTONES.filter(function (m) { return m.id === S.milestone; })[0], box = "";
+    if (S.milestone === "custom") box = "⭐ <b>" + t("yourMs") + "</b> " + esc(S.milestoneOther) + "<br><span class='small muted'>" + t("msCustomHint") + "</span>";
+    else if (fav) {
+      var label = esc(L().milestones[fav.id]);
+      if (milestoneDone(fav, S.streakStart, S.saidNo)) box = "⭐ <b>" + t("msReached", { ms: label }) + "</b>";
+      else if (fav.id === "sayno") box = "⭐ <b>" + t("yourMs") + "</b> " + label + "<br><span class='small muted'>" + t("msSayNoHint") + "</span>";
+      else {
+        var target = fav.id === "morning" ? firstMorningTs(S.streakStart) : S.streakStart + fav.ms;
+        box = "⭐ <b>" + t("yourMs") + "</b> " + label + "<br><span class='small muted'>" + t("msToGo", { t: countdownText(target - Date.now()) }) + "</span>";
+      }
+    }
+    $("favBox").innerHTML = box; $("favBox").classList.toggle("hidden", !box);
+    var b = $("saidNoBtn");
+    b.textContent = S.saidNo ? t("saidNoDone", { date: new Date(S.saidNo + "T12:00").toLocaleDateString(L().locale, { month: "short", day: "numeric" }) }) : t("saidNoBtn");
+    b.disabled = !!S.saidNo;
+  }
+  function renderDays() {
+    if (!$("days")) return;
+    var html = "", today = todayStr();
+    for (var i = 13; i >= 0; i--) {
+      var d = new Date(); d.setDate(d.getDate() - i);
+      var k = dateKey(d), v = S.checkins[k];
+      html += "<div class='day" + (v === "yes" ? " yes" : v === "no" ? " no" : "") + (k === today ? " today" : "") + "' title='" + k + "'>" +
+        d.toLocaleDateString(L().locale, { weekday: "narrow" }) + "<b>" + (v === "yes" ? "✓" : v === "no" ? "✗" : "·") + "</b>" + d.getDate() + "</div>";
+    }
+    $("days").innerHTML = html;
+  }
+
+  /* ================= slip + check-in ================= */
+  function askSlip() {
+    openModal("<div class='big'>🫂</div><h2>" + t("slipTitle") + "</h2><p class='c'>" + t("slipText") + "</p>" +
+      "<div class='actions'><button id='slipCancel'>" + t("slipCancel") + "</button><button class='danger' id='slipConfirm'>" + t("slipConfirm") + "</button></div>");
+    $("slipCancel").addEventListener("click", closeModal);
+    $("slipConfirm").addEventListener("click", relapse);
+  }
+  function relapse() {
+    var ms = Math.max(0, streakMs());
+    S.bestMs = Math.max(S.bestMs, ms); S.restarts++; S.streakStart = Date.now();
+    save(); if (currentTab === "pHome") renderHome();
+    var proof = ms >= 36e5 ? t("relProof", { held: heldText(ms) }) : t("relNew");
+    openModal("<div class='big'>🌱</div><h2>" + t("relTitle") + "</h2><p class='c'>" + esc(proof) + "</p>" +
+      "<p class='c muted'>" + t("relRemember") + "</p><div class='note' style='text-align:center'><i>" + esc(S.why) + "</i></div>" +
+      "<p class='c'>" + t("relRestart") + "</p><div class='actions'><button class='primary' id='okBtn'>" + t("relBtn") + "</button></div>");
+    $("okBtn").addEventListener("click", closeModal);
+  }
+  function openCheckin() {
+    openModal("<div class='big'>📝</div><h2>" + t("ciTitle") + "</h2>" +
+      "<p class='c'><b>" + esc(t("ciQ", { habit: habitName() })) + "</b></p>" +
+      "<div class='actions'><button class='danger' id='ciNo'>" + t("ciNo") + "</button><button class='primary' id='ciYes'>" + t("ciYes") + "</button></div>" +
+      "<div class='actions'><button class='ghost' id='ciLater'>" + t("ciLater") + "</button></div>");
+    $("ciYes").addEventListener("click", function () {
+      S.checkins[todayStr()] = "yes"; S.lastPrompt = todayStr(); save();
+      if (currentTab === "pHome") renderHome();
+      confetti();
+      var ms = Math.max(0, streakMs()), d = Math.floor(ms / 864e5);
+      openModal("<div class='big'>🎉</div><h2>" + t("yesTitle") + "</h2><p class='c'>" +
+        esc(t("yesText", { days: d > 0 ? t("yesDays", { d: L().plural.day(d) }) : "", goals: joinNice(goalLabels()) })) +
+        "</p><div class='actions'><button class='primary' id='okBtn'>" + t("thanks") + "</button></div>");
+      $("okBtn").addEventListener("click", closeModal);
+    });
+    $("ciNo").addEventListener("click", function () { S.checkins[todayStr()] = "no"; S.lastPrompt = todayStr(); relapse(); });
+    $("ciLater").addEventListener("click", function () {
+      closeModal();
+      if (!S.checkins[todayStr()] && $("checkinBanner")) $("checkinBanner").classList.remove("hidden");
+    });
+  }
+  /* in-app fallback: if the app is open when the check-in time passes */
+  function reminderTsFor(d) {
+    var q = (S.reminderTime || "20:00").split(":").map(Number);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), q[0], q[1]).getTime();
+  }
+  function checkReminder() {
+    if (!S.setupDone) return;
+    var today = todayStr();
+    if (S.lastPrompt === today || Date.now() < reminderTsFor(new Date())) return;
+    S.lastPrompt = today; save();
+    if (S.checkins[today]) return;
+    if (currentTab !== "pHome") showTab("pHome");
+    if ($("checkinBanner")) $("checkinBanner").classList.remove("hidden");
+    if (!$("overlay").classList.contains("show")) openCheckin();
+  }
+
+  /* ================= why page ================= */
+  function whyLines() {
+    var lines = [], d = Math.floor(Math.max(0, streakMs()) / 864e5), goals = goalLabels();
+    lines.push(t("wlCrit", { crit: S.critical }));
+    if (goals.length) lines.push(t("wlGoals", { goals: joinNice(goals) }));
+    if (S.improve.trim()) lines.push(t("wlImprove", { improve: S.improve.trim() }));
+    if (S.milestone) lines.push(t("wlMs", { ms: milestoneLabel(S.milestone) }));
+    if (d >= 1) lines.push(t("wlDays", { d: d }));
+    if (S.belief) lines.push(t("wlBelief", { belief: L().belief[S.belief].label.replace(/\s*💪/, "") }));
+    return lines;
+  }
+  function renderWhy(editing) {
+    var lines = whyLines(), n = Math.floor(Date.now() / 864e5);
+    var html = "<div class='card why-big'><span class='eyebrow'>" + t("whyPageTitle") + "</span>" + esc(S.why) + "</div>" +
+      "<div class='card why-line'><span class='eyebrow'>" + t("whyToday") + "</span>" + esc(lines[n % lines.length]) + "</div>" +
+      "<div class='card'><div class='kv'>" +
+        "<div><span>" + t("whyGoals") + "</span><p>" + esc(joinNice(goalLabels())) + "</p></div>" +
+        "<div><span>" + t("whyImprove") + "</span><p>" + esc(S.improve) + "</p></div>" +
+        "<div><span>" + t("whyMs") + "</span><p>" + esc(milestoneLabel(S.milestone)) + "</p></div>" +
+        "<div><span>" + t("whyCrit") + "</span><p>" + S.critical + " / 10 — " + esc(critText(S.critical)) + "</p></div>" +
+        (S.about.trim() ? "<div><span>" + t("whyAbout") + "</span><p>" + esc(S.about) + "</p></div>" : "") +
+      "</div></div>";
+    if (editing) {
+      html += "<div class='card'><h3>" + t("whyFocus") + "</h3><ul class='focus-list'>" + focusPrompts().map(function (p) { return "<li>" + esc(p) + "</li>"; }).join("") + "</ul>" +
+        "<label class='field' for='whyEdit'>" + t("mySentence") + "</label><textarea id='whyEdit' maxlength='280'>" + esc(S.why) + "</textarea>" +
+        "<div class='error' id='whyErr'></div><div class='actions' style='margin-top:10px'><button id='whyCancel'>" + t("cancel") + "</button><button class='primary' id='whySave'>" + t("save") + "</button></div></div>";
+    } else {
+      html += "<div class='actions'><button id='whyEditBtn'>✏️ " + t("whyEdit") + "</button></div>";
+    }
+    $("pWhy").innerHTML = html;
+    if (editing) {
+      whyWarned = false;
+      $("whyCancel").addEventListener("click", function () { renderWhy(false); });
+      $("whySave").addEventListener("click", function () {
+        var v = $("whyEdit").value, err = validateWhy(v);
+        if (err) { $("whyErr").textContent = err; return; }
+        S.why = v.trim(); save(); renderWhy(false); toast(t("saved"));
+      });
+    } else $("whyEditBtn").addEventListener("click", function () { renderWhy(true); });
+  }
+
+  /* ================= learn ================= */
+  function articles() { return Array.isArray(window.BF_ARTICLES) ? window.BF_ARTICLES : []; }
+  var TYPE_EMO = { research: "🔬", story: "💬", guide: "🧭" };
+  function readable() {
+    /* English users: English only. Hebrew users: Hebrew first, then English. */
+    var list = articles().filter(function (a) { return S.lang === "he" || a.lang === "en"; });
+    if (S.lang === "he") list = list.filter(function (a) { return a.lang === "he"; }).concat(list.filter(function (a) { return a.lang !== "he"; }));
+    return list;
+  }
+  function renderLearn() {
+    var p = $("pLearn"), list = readable();
+    var html = "<div class='card'><h2>" + t("learnTitle") + "</h2><p class='sub' style='margin:0'>" + t("learnSub") + "</p></div>";
+    if (!list.length) { p.innerHTML = html + "<div class='card muted'>" + t("articlesSoon") + "</div>"; return; }
+    function item(a) {
+      var about = a.about ? (a.about[S.lang] || a.about.en || "") : "";
+      var badge = S.lang === "he" && a.lang === "en" ? " · " + t("inEnglish") : "";
+      return "<a class='btn art' href='" + esc(a.url) + "' target='_blank' rel='noopener'><span class='emo'>" + (TYPE_EMO[a.type] || "📖") + "</span><span><b>" + esc(a.title) +
+        "</b><small>" + esc(a.source) + " · " + t("type_" + a.type) + badge + "</small>" + (about ? "<small class='about'>" + esc(about) + "</small>" : "") + "</span><span class='ext' aria-hidden='true'>↗</span></a>";
+    }
+    function section(title, items) { return items.length ? "<div class='section-title'>" + esc(title) + "</div><div class='art-list'>" + items.map(item).join("") + "</div>" : ""; }
+    var mine = list.filter(function (a) { return a.habits.indexOf(S.habit) >= 0; });
+    var gen = list.filter(function (a) { return a.habits.indexOf("general") >= 0 && a.habits.indexOf(S.habit) < 0; });
+    html += section(t("forYou"), mine) + section(t("general"), gen);
+    HABIT_ORDER.forEach(function (h) {
+      if (h === S.habit || h === "other") return;
+      var items = list.filter(function (a) { return a.habits[0] === h && mine.indexOf(a) < 0; });
+      html += section(EMO[h] + " " + L().habits[h].label, items);
+    });
+    html += "<p class='small muted' style='margin-top:18px'>" + t("learnNote") + "</p>";
+    p.innerHTML = html;
+  }
+
+  /* ================= community ================= */
+  var commCache = null;
+  function renderComm() {
+    var p = $("pComm");
+    var head = "<div class='card'><h2>" + t("commTitle") + "</h2><p class='sub' style='margin:0'>" + t("commSub") + "</p></div>";
+    if (!FB.ready) { p.innerHTML = head + "<div class='card muted'>" + (FB.configured ? t("cLoading") : t("cOffline")) + "</div>"; return; }
+    p.innerHTML = head + "<div class='card muted' id='commBody'>" + t("cLoading") + "</div>";
+    FB.db.collection("stats").doc("summary").get().then(function (snap) {
+      commCache = snap.exists ? snap.data() : null; drawComm(commCache);
+    }).catch(function () { drawComm(commCache); });
+  }
+  function drawComm(s) {
+    var head = "<div class='card'><h2>" + t("commTitle") + "</h2><p class='sub' style='margin:0'>" + t("commSub") + "</p></div>";
+    if (!s || !s.users) { $("pComm").innerHTML = head + "<div class='card muted'>" + t("cEmpty") + "</div>"; return; }
+    var nf = function (n) { return (+n || 0).toLocaleString(L().locale); };
+    var by = s.byHabit || {}, keys = Object.keys(by).sort(function (a, b) { return by[b] - by[a]; }), max = keys.length ? by[keys[0]] : 1;
+    var html = head + "<div class='card'><div class='stats'>" +
+      stat(nf(s.users), t("cUsers")) + stat(nf(s.checkedInToday), t("cToday")) +
+      stat((+s.avgStreakDays || 0).toLocaleString(L().locale), t("cAvg")) + stat(nf(s.longestStreakDays), t("cLongest")) +
+      "</div><div class='stats' style='grid-template-columns:1fr;margin-top:10px'>" + stat(nf(s.totalCleanDays), t("cTotal")) + "</div></div>" +
+      "<div class='card'><h3>" + t("cByHabit") + "</h3><div class='bars'>" +
+      keys.map(function (k) {
+        var label = (EMO[k] || "✨") + " " + (L().habits[k] ? L().habits[k].label : k);
+        return "<div class='bar'><span>" + esc(label) + "</span><div class='track'><div class='fill' style='width:" + Math.max(4, by[k] / max * 100) + "%'></div></div><b>" + nf(by[k]) + "</b></div>";
+      }).join("") + "</div>" +
+      (s.updatedAt ? "<p class='small muted' style='margin:12px 0 0'>" + t("cUpdated", { time: new Date(s.updatedAt).toLocaleString(L().locale, { dateStyle: "medium", timeStyle: "short" }) }) + "</p>" : "") + "</div>";
+    $("pComm").innerHTML = html;
+  }
+  window.BF_demoCommunity = function (s) { commCache = s; drawComm(s); }; /* for testing */
+
+  /* ================= profile & settings ================= */
+  var installEvent = null;
+  window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); installEvent = e; if (currentTab === "pProfile") renderProfile(); });
+  function isIOS() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); }
+  function isStandalone() { return window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; }
+  function notifState() {
+    if (isIOS() && !isStandalone()) return "ios";
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return "unsupported";
+    if (!FB.configured) return "offline";
+    if (Notification.permission === "denied") return "blocked";
+    return S.notify && S.fcmToken && Notification.permission === "granted" ? "on" : "off";
+  }
+  function renderProfile() {
+    var ns = notifState(), notifHtml;
+    if (ns === "on") notifHtml = "<p class='small'>" + t("notifOn") + " · " + esc(S.reminderTime) + "</p><div class='actions'><button id='notifOffBtn'>" + t("notifTurnOff") + "</button></div>";
+    else if (ns === "ios") notifHtml = "<div class='note gold'><b>" + t("iosGuideTitle") + "</b><br>" + t("iosGuide") + "</div>";
+    else if (ns === "blocked") notifHtml = "<p class='small'>" + t("notifBlocked") + "</p>";
+    else if (ns === "unsupported") notifHtml = "<p class='small muted'>" + t("notifUnsupported") + "</p>";
+    else if (ns === "offline") notifHtml = "<p class='small muted'>" + t("notifOffline") + "</p>";
+    else notifHtml = "<div class='actions'><button class='primary' id='notifOnBtn'>" + t("notifOff") + "</button></div>";
+
+    $("pProfile").innerHTML =
+      "<div class='card'><h2>" + t("profPageTitle") + "</h2>" +
+        "<label class='field' for='prName'>" + t("name") + "</label><input type='text' id='prName' maxlength='40' value='" + esc(S.name) + "'>" +
+        "<label class='field' for='prAge'>" + t("age") + "</label><input type='number' id='prAge' min='10' max='120' inputmode='numeric' value='" + esc(S.age) + "'>" +
+        "<label class='field' for='prAbout'>" + t("about") + "</label><textarea id='prAbout' maxlength='500' placeholder='" + esc(t("aboutPh")) + "'>" + esc(S.about) + "</textarea>" +
+        "<div class='row'><div><label class='field' for='prLang'>" + t("language") + "</label><select id='prLang'><option value='en'" + (S.lang === "en" ? " selected" : "") + ">English</option><option value='he'" + (S.lang === "he" ? " selected" : "") + ">עברית</option></select></div>" +
+        "<div><label class='field' for='prTime'>" + t("remTime") + "</label><input type='time' id='prTime' value='" + esc(S.reminderTime) + "'></div>" +
+        "<div><label class='field' for='prCur'>" + t("currency") + "</label>" + currencySelect().replace("id='currency'", "id='prCur'") + "</div></div>" +
+        "<div class='error' id='prErr'></div><div class='actions' style='margin-top:8px'><button class='primary' id='prSave'>" + t("save") + "</button></div></div>" +
+      "<div class='card'><h3>" + t("notifTitle") + "</h3>" + notifHtml + "</div>" +
+      (installEvent ? "<div class='card'><div class='actions'><button id='installBtn'>" + t("installBtn") + "</button></div></div>" : "") +
+      "<div class='card'><div class='actions'><button class='danger' id='resetBtn'>" + t("resetBtn") + "</button></div></div>";
+
+    $("prSave").addEventListener("click", function () {
+      var name = $("prName").value.trim(), age = $("prAge").value, a = +age;
+      if (!name) { $("prErr").textContent = t("errName"); return; }
+      if (!age || isNaN(a) || a < 10 || a > 120) { $("prErr").textContent = t("errAge"); return; }
+      var newTime = $("prTime").value || S.reminderTime, langChanged = $("prLang").value !== S.lang;
+      if (newTime !== S.reminderTime) {
+        S.reminderTime = newTime;
+        S.lastPrompt = (reminderTsFor(new Date()) <= Date.now() || S.checkins[todayStr()]) ? todayStr() : null;
+      }
+      S.name = name; S.age = age; S.about = $("prAbout").value; S.currency = $("prCur").value; S.lang = $("prLang").value;
+      save(); if (langChanged) applyLang(); showTab("pProfile"); toast(t("saved"));
+    });
+    if ($("notifOnBtn")) $("notifOnBtn").addEventListener("click", enablePush);
+    if ($("notifOffBtn")) $("notifOffBtn").addEventListener("click", disablePush);
+    if ($("installBtn")) $("installBtn").addEventListener("click", function () { installEvent.prompt(); installEvent = null; renderProfile(); });
+    $("resetBtn").addEventListener("click", function () {
+      openModal("<div class='big'>⚠️</div><h2>" + t("resetTitle") + "</h2><p class='c'>" + t("resetText") + "</p>" +
+        "<div class='actions'><button id='rsCancel'>" + t("cancel") + "</button><button class='danger' id='rsYes'>" + t("yesReset") + "</button></div>");
+      $("rsCancel").addEventListener("click", closeModal);
+      $("rsYes").addEventListener("click", function () {
+        var msg = t("resetDone");
+        if (FB.ready && FB.uid) {
+          FB.db.collection("users").doc(FB.uid).delete().catch(function () {});
+          if (S.shareId) FB.db.collection("shares").doc(S.shareId).delete().catch(function () {});
+        }
+        try { localStorage.removeItem(KEY); } catch (e) {}
+        S = blankState(); step = 0; currentTab = "pHome"; closeModal(); route(); toast(msg);
+      });
+    });
+  }
+  function offerReminders() {
+    var ns = notifState();
+    if (ns !== "off" && ns !== "ios") return;
+    openModal("<div class='big'>🔔</div><h2>" + t("notifTitle") + "</h2><p class='c'>" + t("remSub") + "</p>" +
+      (ns === "ios" ? "<div class='note gold'><b>" + t("iosGuideTitle") + "</b><br>" + t("iosGuide") + "</div><div class='actions'><button class='primary' id='okBtn'>" + t("thanks") + "</button></div>"
+        : "<div class='actions'><button id='laterBtn'>" + t("ciLater") + "</button><button class='primary' id='onBtn'>" + t("notifOff") + "</button></div>"));
+    if ($("okBtn")) $("okBtn").addEventListener("click", closeModal);
+    if ($("laterBtn")) $("laterBtn").addEventListener("click", closeModal);
+    if ($("onBtn")) $("onBtn").addEventListener("click", function () { closeModal(); enablePush(); });
+  }
+
+  /* ================= Firebase (optional) ================= */
+  var FB = { configured: !!self.BF_FIREBASE_CONFIG, ready: false, uid: null, db: null, messaging: null };
+  function loadScript(src) {
+    return new Promise(function (res, rej) { var s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  }
+  function initFirebase() {
+    if (!FB.configured) return;
+    var base = "https://www.gstatic.com/firebasejs/" + FB_VER + "/";
+    loadScript(base + "firebase-app-compat.js")
+      .then(function () { return Promise.all(["auth", "firestore", "messaging"].map(function (m) { return loadScript(base + "firebase-" + m + "-compat.js"); })); })
+      .then(function () {
+        firebase.initializeApp(self.BF_FIREBASE_CONFIG);
+        FB.db = firebase.firestore();
+        try { if (firebase.messaging.isSupported()) FB.messaging = firebase.messaging(); } catch (e) {}
+        if (FB.messaging) FB.messaging.onMessage(function () { checkReminderForce(); });
+        firebase.auth().onAuthStateChanged(function (u) {
+          if (!u) return;
+          FB.uid = u.uid; FB.ready = true;
+          syncNow();
+          if (currentTab === "pComm" && !$("app").classList.contains("hidden")) renderComm();
+          if (currentTab === "pProfile" && !$("app").classList.contains("hidden")) renderProfile();
+          if (pendingShareView) { var id = pendingShareView; pendingShareView = null; showShareView(id); }
+        });
+        return firebase.auth().signInAnonymously();
+      })
+      .catch(function () { FB.ready = false; });
+  }
+  function checkReminderForce() {
+    if (!S.setupDone || S.checkins[todayStr()]) return;
+    showTab("pHome"); openCheckin();
+  }
+  var syncTimer = null;
+  function scheduleSync() { clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, 1200); }
+  function lastCheckinDate() { var k = Object.keys(S.checkins).sort(); return k.length ? k[k.length - 1] : null; }
+  function syncNow() {
+    if (!FB.ready || !S.setupDone) return Promise.resolve();
+    var tz = "UTC"; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch (e) {}
+    var jobs = [FB.db.collection("users").doc(FB.uid).set({
+      lang: S.lang, habit: S.habit, reminderTime: S.reminderTime, tz: tz,
+      notify: !!S.notify, fcmToken: S.fcmToken || null,
+      streakStart: S.streakStart, bestMs: S.bestMs, restarts: S.restarts, checkinsYes: checkinsYes(),
+      lastCheckinDate: lastCheckinDate(), updatedAt: Date.now()
+    }, { merge: true })];
+    if (S.shareId) jobs.push(FB.db.collection("shares").doc(S.shareId).set({
+      owner: FB.uid, name: S.name.trim().split(/\s+/)[0] || "", habit: S.habit, habitOther: S.habit === "other" ? S.habitOther : "",
+      streakStart: S.streakStart, bestMs: S.bestMs, restarts: S.restarts, checkinsYes: checkinsYes(),
+      saidNo: !!S.saidNo, updatedAt: Date.now()
+    }));
+    return Promise.all(jobs).catch(function () {});
+  }
+  function enablePush() {
+    var ns = notifState();
+    if (ns === "ios") { offerReminders(); return; }
+    if (ns === "unsupported") { toast(t("notifUnsupported")); return; }
+    if (ns === "offline" || !FB.ready || !FB.messaging) { toast(t("notifOffline")); return; }
+    Notification.requestPermission().then(function (perm) {
+      if (perm !== "granted") { toast(t("notifDenied")); renderProfileIfOpen(); return; }
+      return navigator.serviceWorker.register("firebase-messaging-sw.js").then(function (reg) {
+        return FB.messaging.getToken({ vapidKey: self.BF_VAPID_KEY, serviceWorkerRegistration: reg });
+      }).then(function (token) {
+        if (!token) throw new Error("no token");
+        S.notify = true; S.fcmToken = token; save(); syncNow(); toast(t("notifEnabled")); renderProfileIfOpen();
+      });
+    }).catch(function () { toast(t("notifError")); });
+  }
+  function disablePush() {
+    S.notify = false;
+    var p = FB.messaging ? FB.messaging.deleteToken().catch(function () {}) : Promise.resolve();
+    p.then(function () { S.fcmToken = null; save(); syncNow(); toast(t("notifDisabled")); renderProfileIfOpen(); });
+  }
+  function renderProfileIfOpen() { if (currentTab === "pProfile" && !$("app").classList.contains("hidden")) renderProfile(); }
+
+  /* ================= share ================= */
+  function shareUrl() { return location.origin + location.pathname + "#share-" + S.shareId; }
+  function shareProgress() {
+    if (!FB.ready) { toast(t("shareOffline")); return; }
+    if (!S.shareId) { S.shareId = randomId(10); save(); }
+    syncNow().then(function () {
+      var url = shareUrl(), text = t("shareText", { habit: habitName() });
+      var wa = "https://wa.me/?text=" + encodeURIComponent(text + " " + url);
+      openModal("<div class='big'>🔗</div><h2>" + t("shareCardTitle") + "</h2><p class='c small muted'>" + t("shareCardSub") + "</p>" +
+        "<div class='linkbox' id='shareLink'>" + esc(url) + "</div>" +
+        "<div class='actions'>" + (navigator.share ? "<button class='primary' id='nativeShare'>" + t("shareBtn") + "</button>" : "") +
+        "<a class='btn' href='" + esc(wa) + "' target='_blank' rel='noopener'>" + t("shareWa") + "</a><button id='copyLink'>" + t("shareCopy") + "</button></div>" +
+        "<p class='small muted'>" + t("shareInstaHint") + "</p><div class='actions'><button class='ghost' id='shareClose'>" + t("cancel") + "</button></div>");
+      if ($("nativeShare")) $("nativeShare").addEventListener("click", function () { navigator.share({ title: "Break Free", text: text, url: url }).catch(function () {}); });
+      $("copyLink").addEventListener("click", function () { copyText(url, function () { toast(t("linkCopied")); }); });
+      $("shareClose").addEventListener("click", closeModal);
+    });
+  }
+  var pendingShareView = null, shareUnsub = null, shareTimer = null;
+  function showShareView(id) {
+    var v = $("shareView"); v.classList.remove("hidden");
+    if (!FB.configured) { v.innerHTML = "<div class='card'>" + t("shareOffline") + "</div>"; return; }
+    if (!FB.ready) { pendingShareView = id; v.innerHTML = "<div class='card muted'>" + t("svLoading") + "</div>"; return; }
+    if (shareUnsub) shareUnsub();
+    shareUnsub = FB.db.collection("shares").doc(id).onSnapshot(function (snap) {
+      if (!snap.exists) { v.innerHTML = "<div class='card'>" + t("svNotFound") + "</div>" + ctaHtml(); bindCta(); return; }
+      drawShareView(snap.data());
+    }, function () { v.innerHTML = "<div class='card'>" + t("svNotFound") + "</div>" + ctaHtml(); bindCta(); });
+  }
+  function ctaHtml() { return "<div class='actions'><button class='primary' id='svCta'>" + t("svCta") + "</button></div>"; }
+  function bindCta() { $("svCta").addEventListener("click", function () { history.replaceState(null, "", location.pathname); route(); }); }
+  function drawShareView(d) {
+    var label = d.habit === "other" ? (d.habitOther || L().habits.other.label) : (L().habits[d.habit] || L().habits.other).label;
+    var reached = MILESTONES.filter(function (m) { return milestoneDone(m, d.streakStart, d.saidNo); });
+    $("shareView").innerHTML =
+      "<div class='card why-big'><span class='eyebrow'>" + t("svSub") + "</span>" + (EMO[d.habit] || "✨") + " " + esc(d.name ? t("svTitle", { name: d.name, habit: label }) : t("svTitleNoName", { habit: label })) + "</div>" +
+      "<div class='card'><div class='timer'>" +
+        "<div><b id='svD'>0</b><span>" + t("days") + "</span></div><div><b id='svH'>0</b><span>" + t("hours") + "</span></div>" +
+        "<div><b id='svM'>0</b><span>" + t("min") + "</span></div><div><b id='svS'>0</b><span>" + t("sec") + "</span></div></div>" +
+        "<div class='stats'>" + stat(t("dh", { d: Math.floor(Math.max(d.bestMs || 0, Date.now() - d.streakStart) / 864e5), h: Math.floor(Math.max(d.bestMs || 0, Date.now() - d.streakStart) / 36e5) % 24 }), t("svBest")) +
+        stat(d.checkinsYes || 0, t("svCheckins")) + "</div></div>" +
+      "<div class='card'><h3>" + t("svMs") + "</h3>" + (reached.length ? "<div class='badges'>" + reached.map(function (m) {
+        return "<div class='badge done'><span class='emo'>" + m.emo + "</span>" + esc(L().milestones[m.id]) + "</div>"; }).join("") + "</div>" : "<p class='muted'>" + t("svNone") + "</p>") + "</div>" + ctaHtml();
+    bindCta();
+    clearInterval(shareTimer);
+    function upd() {
+      if (!$("svD")) { clearInterval(shareTimer); return; }
+      var a = Math.max(0, Date.now() - d.streakStart);
+      $("svD").textContent = Math.floor(a / 864e5); $("svH").textContent = Math.floor(a / 36e5) % 24;
+      $("svM").textContent = Math.floor(a / 6e4) % 60; $("svS").textContent = Math.floor(a / 1e3) % 60;
+    }
+    upd(); shareTimer = setInterval(upd, 1000);
+  }
+  window.BF_demoShare = drawShareView; /* for testing */
+
+  /* ================= loop + start ================= */
+  setInterval(function () {
+    if (!S.setupDone || $("app").classList.contains("hidden")) return;
+    if (currentTab === "pHome") {
+      tick();
+      var now = new Date();
+      if (now.getSeconds() === 0) { renderStats(); renderBadges(); }
+    }
+    if (new Date().getSeconds() % 15 === 0) checkReminder();
+  }, 1000);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && S.setupDone && !$("app").classList.contains("hidden")) { showTab(currentTab); scheduleSync(); }
+  });
+  if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("firebase-messaging-sw.js").catch(function () {});
+  initFirebase();
+  route();
+})();
+</script>
+</body>
+</html>

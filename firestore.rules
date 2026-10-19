@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Each phone's anonymous progress: only that phone can read or change it.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Public share pages: anyone with the link can read; only the owner can write.
+    match /shares/{shareId} {
+      allow read: if true;
+      allow create: if request.auth != null && request.resource.data.owner == request.auth.uid;
+      allow update: if request.auth != null && resource.data.owner == request.auth.uid
+                    && request.resource.data.owner == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.owner == request.auth.uid;
+    }
+
+    // Community totals: everyone can read; only the GitHub job (admin key) writes it.
+    match /stats/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

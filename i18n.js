@@ -133,6 +133,10 @@ window.BF_I18N = {
 
       profPageTitle: "Profile & settings", save: "Save", saved: "Saved ✓",
       language: "Language", currency: "Currency",
+      myHabits: "My habits", addHabit: "Add a habit", addHabitBtn: "Add", remove: "Remove", sinceDate: "since {date}",
+      habitAdded: "{habit} added — its timer is running.", habitRemoved: "Habit removed.",
+      removeHabitTitle: "Remove {habit}?", removeHabitText: "Its timer, streak and milestones will be deleted. Your other habits aren't affected.",
+      removeHabitBtn: "Yes, remove", keepOneHabit: "You need at least one habit. To start over completely, use Reset everything.",
       notifTitle: "Daily check-in reminder",
       notifOn: "🔔 Reminders are on", notifOff: "🔔 Turn on daily reminders", notifTurnOff: "Turn off reminders",
       notifBlocked: "🔕 Notifications are blocked. Allow them for this app in your browser or phone settings.",
@@ -168,7 +172,7 @@ window.BF_I18N = {
       relBtn: "Start again 💪",
       toastStart: "Your journey has begun. You've got this! 💚",
 
-      svTitle: "{name} is breaking free from {habit}", svTitleNoName: "Breaking free from {habit}", svSub: "Live progress",
+      svTitle: "{name} is breaking free from {habit}", svTitleM: "{name} is breaking free from {habit}", svTitleF: "{name} is breaking free from {habit}", svTitleNoName: "Breaking free from {habit}", svSub: "Live progress",
       svBest: "Best streak", svCheckins: "Clean days checked in", svMs: "Milestones reached",
       svNotFound: "This progress link no longer exists.", svLoading: "Loading…",
       svCta: "Start your own journey", svNone: "None yet — the first one is close!"
@@ -368,6 +372,10 @@ window.BF_I18N = {
 
       profPageTitle: "פרופיל והגדרות", save: "שמירה", saved: "נשמר ✓",
       language: "שפה", currency: "מטבע",
+      myHabits: "ההרגלים שלי", addHabit: "הוספת הרגל", addHabitBtn: "הוספה", remove: "הסרה", sinceDate: "מאז {date}",
+      habitAdded: "ההרגל „{habit}“ נוסף, והטיימר שלו כבר רץ.", habitRemoved: "ההרגל הוסר.",
+      removeHabitTitle: "להסיר את „{habit}“?", removeHabitText: "הטיימר, הרצף ואבני הדרך של ההרגל הזה יימחקו. שאר ההרגלים לא מושפעים.",
+      removeHabitBtn: "כן, להסיר", keepOneHabit: "צריך לפחות הרגל אחד. כדי להתחיל הכול מחדש, [[השתמש|השתמשי]] ב„איפוס הכול“.",
       notifTitle: "תזכורת צ'ק-אין יומית",
       notifOn: "🔔 התזכורות פועלות", notifOff: "🔔 הפעלת תזכורת יומית", notifTurnOff: "כיבוי התזכורות",
       notifBlocked: "🔕 ההתראות חסומות. [[אפשר|אפשרי]] אותן לאפליקציה בהגדרות הדפדפן או הטלפון.",
@@ -403,7 +411,7 @@ window.BF_I18N = {
       relBtn: "[[מתחיל|מתחילה]] מחדש 💪",
       toastStart: "המסע שלך התחיל. [[אתה יכול|את יכולה]]! 💚",
 
-      svTitle: "{name} משתחרר/ת מ{habit}", svTitleNoName: "משתחררים מ{habit}", svSub: "התקדמות בזמן אמת",
+      svTitle: "{name} משתחרר/ת מ{habit}", svTitleM: "{name} משתחרר מ{habit}", svTitleF: "{name} משתחררת מ{habit}", svTitleNoName: "משתחררים מ{habit}", svSub: "התקדמות בזמן אמת",
       svBest: "הרצף הכי ארוך", svCheckins: "ימים נקיים בצ'ק-אין", svMs: "אבני דרך שהושגו",
       svNotFound: "קישור ההתקדמות הזה כבר לא קיים.", svLoading: "טוען…",
       svCta: "להתחיל מסע משלך", svNone: "עדיין אין — הראשונה כבר קרובה!"

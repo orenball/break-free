@@ -134,7 +134,18 @@
   .hc-head .emo { font-size: 24px; line-height: 1; }
   .hc-head h3 { margin: 0; }
   .fav-line { color: var(--muted); text-align: center; font-size: 13px; margin: -6px 0 12px; min-height: 1em; }
-  .ms-chips { margin-bottom: 12px; }
+  .slider { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .slider::-webkit-scrollbar { display: none; }
+  .slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: center; margin-bottom: 0; }
+  .dots { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 10px 0 4px; }
+  .dot { width: 8px; height: 8px; min-height: 0; padding: 0; border: none; border-radius: 99px; background: var(--border); transition: width 0.2s; }
+  .dot.on { background: var(--accent); width: 22px; }
+  .swipe-hint { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .single-gap { height: 16px; }
+  .ms-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 12px; }
+  .ms-strip .m { font-size: 20px; filter: grayscale(1); opacity: 0.35; }
+  .ms-strip .m.done { filter: none; opacity: 1; }
+  .ms-strip small { color: var(--muted); margin-inline-start: auto; }
   .habit-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
   .habit-row:last-child { border-bottom: none; }
   .habit-row small { color: var(--muted); }
@@ -330,7 +341,7 @@
   function load() {
     try {
       var raw = localStorage.getItem(KEY);
-      if (raw) { var s = JSON.parse(raw), b = blankState(); migrate(s); for (var k in b) if (!(k in s)) s[k] = b[k]; return s; }
+      if (raw) { var s = JSON.parse(raw), b = blankState(); migrate(s); s.currency = "₪"; for (var k in b) if (!(k in s)) s[k] = b[k]; return s; }
     } catch (e) {}
     return blankState();
   }
@@ -571,7 +582,6 @@
               "<input type='number' id='cost" + i + "' min='0' step='any' inputmode='decimal' value='" + esc(h.cost) + "' placeholder='50'>";
           }
         });
-        if (needCur) html += "<label class='field' for='currency'>" + t("currency") + "</label>" + currencySelect();
         return html;
       },
       bind: function () {
@@ -825,39 +835,58 @@
       "<div id='checkinBanner' class='banner hidden'><span>" + t("ciBanner") + "</span><button class='primary' id='openCheckinBtn'>" + t("ciNow") + "</button></div>" +
       "<div class='card why-card'><span class='eyebrow'>" + t("whyPageTitle") + "</span>" + esc(S.why) + "</div>" +
       "<div class='actions' style='margin-bottom:16px'><button class='primary' id='checkinNowBtn'>" + t("checkinBtn") + "</button></div>" +
-      S.habits.map(function (h, i) {
-        return "<div class='card'><div class='hc-head'><span class='emo'>" + EMO[h.key] + "</span><h3>" + esc(habitLabel(h)) + "</h3></div>" +
+      "<div class='slider' id='slider'>" + S.habits.map(function (h, i) {
+        return "<div class='card slide' data-slide='" + i + "'><div class='hc-head'><span class='emo'>" + EMO[h.key] + "</span><h3>" + esc(habitLabel(h)) + "</h3></div>" +
           "<div class='timer-title' id='tt" + i + "'></div><div class='timer'>" +
           "<div><b id='tD" + i + "'>0</b><span>" + t("days") + "</span></div><div><b id='tH" + i + "'>0</b><span>" + t("hours") + "</span></div>" +
           "<div><b id='tM" + i + "'>0</b><span>" + t("min") + "</span></div><div><b id='tS" + i + "'>0</b><span>" + t("sec") + "</span></div></div>" +
           "<div class='fav-line' id='fav" + i + "'></div>" +
           "<div class='stats' id='stats" + i + "'></div>" +
-          "<div class='actions' style='margin-top:12px'><button class='danger' data-slip='" + i + "'>" + t("slipBtn") + "</button></div></div>";
-      }).join("") +
+          "<div class='ms-strip' id='ms" + i + "'></div>" +
+          "<div class='actions' style='margin-top:12px'><button data-sayno='" + i + "'></button><button class='danger' data-slip='" + i + "'>" + t("slipBtn") + "</button></div></div>";
+      }).join("") + "</div>" +
+      (multi ? "<div class='dots' role='tablist'>" + S.habits.map(function (h, i) {
+        return "<button class='dot" + (i === msIdx ? " on" : "") + "' data-dot='" + i + "' aria-label='" + esc(habitLabel(h)) + "'></button>"; }).join("") + "</div>" +
+        "<div class='swipe-hint'>" + t("swipeHint") + "</div>" : "<div class='single-gap'></div>") +
       "<div class='card'><h3>" + t("quoteTitle") + "</h3><div class='quote'>“" + esc(todaysQuote()) + "”</div></div>" +
-      "<div class='card'><h3>" + t("milestonesTitle") + "</h3>" +
-        (multi ? "<div class='chips ms-chips'>" + S.habits.map(function (h, i) {
-          return "<button class='chip" + (i === msIdx ? " selected" : "") + "' data-msh='" + i + "'>" + EMO[h.key] + " " + esc(habitLabel(h)) + "</button>"; }).join("") + "</div>" : "") +
-        "<div class='fav-box' id='favBox'></div><div class='badges' id='badges'></div>" +
-        "<div class='actions' style='margin-top:12px'><button id='saidNoBtn'></button></div></div>" +
       (S.share !== "self" ? "<div class='card'><h3>" + t("shareCardTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("shareCardSub") + "</p><div class='actions'><button class='primary' id='shareBtn'>" + t("shareBtn") + "</button></div></div>" : "") +
       "<div class='card'><h3>" + t("daysTitle") + "</h3><div class='days' id='days'></div><p class='small muted' style='margin:10px 0'>" + t("daysLegend") + "</p>" +
         "<div class='stats' style='grid-template-columns:1fr'>" + stat(checkinsYes(), t("cleanCheckins")) + "</div></div>";
     $("checkinNowBtn").addEventListener("click", openCheckin);
     $("openCheckinBtn").addEventListener("click", openCheckin);
     p.querySelectorAll("[data-slip]").forEach(function (b) { b.addEventListener("click", function () { askSlip(+b.dataset.slip); }); });
-    p.querySelectorAll("[data-msh]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        msIdx = +b.dataset.msh;
-        p.querySelectorAll("[data-msh]").forEach(function (c) { c.classList.toggle("selected", +c.dataset.msh === msIdx); });
-        renderBadges();
-      });
+    p.querySelectorAll("[data-sayno]").forEach(function (b) {
+      b.addEventListener("click", function () { S.habits[+b.dataset.sayno].saidNo = todayStr(); save(); renderBadges(); confetti(); toast(t("saidNoToast")); });
     });
-    $("saidNoBtn").addEventListener("click", function () { S.habits[msIdx].saidNo = todayStr(); save(); renderBadges(); confetti(); toast(t("saidNoToast")); });
+    bindSlider();
     if ($("shareBtn")) $("shareBtn").addEventListener("click", shareProgress);
     tick(); renderStats(); renderBadges(); renderDays();
     if (S.lastPrompt === todayStr() && !S.checkins[todayStr()]) $("checkinBanner").classList.remove("hidden");
     checkReminder();
+  }
+  /* swipe between habits; works the same left-to-right and right-to-left */
+  function goToSlide(i, smooth) {
+    var sl = $("slider"), el = sl && sl.querySelector("[data-slide='" + i + "']");
+    if (!el) return;
+    sl.scrollBy({ left: el.getBoundingClientRect().left - sl.getBoundingClientRect().left, behavior: smooth ? "smooth" : "auto" });
+  }
+  function bindSlider() {
+    var sl = $("slider"); if (!sl) return;
+    if (msIdx) goToSlide(msIdx, false);
+    var raf = null;
+    sl.addEventListener("scroll", function () {
+      if (raf) return;
+      raf = requestAnimationFrame(function () {
+        raf = null;
+        var mid = sl.getBoundingClientRect().left + sl.clientWidth / 2, best = 0, bestD = Infinity;
+        sl.querySelectorAll("[data-slide]").forEach(function (el) {
+          var r = el.getBoundingClientRect(), d = Math.abs(r.left + r.width / 2 - mid);
+          if (d < bestD) { bestD = d; best = +el.dataset.slide; }
+        });
+        if (best !== msIdx) { msIdx = best; document.querySelectorAll("[data-dot]").forEach(function (d) { d.classList.toggle("on", +d.dataset.dot === msIdx); }); }
+      });
+    }, { passive: true });
+    document.querySelectorAll("[data-dot]").forEach(function (d) { d.addEventListener("click", function () { goToSlide(+d.dataset.dot, true); }); });
   }
   function todaysQuote() {
     var d = new Date(), n = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5);
@@ -914,23 +943,19 @@
   function favMilestone() { return MILESTONES.filter(function (m) { return m.id === S.milestone; })[0]; }
   function favTarget(fav, h) { return fav.id === "morning" ? firstMorningTs(h.streakStart) : h.streakStart + fav.ms; }
   function renderBadges() {
-    var h = S.habits[msIdx];
-    if (!$("badges") || !h) return;
-    $("badges").innerHTML = MILESTONES.map(function (m) {
-      return "<div class='badge" + (milestoneDone(m, h.streakStart, h.saidNo) ? " done" : "") + (S.milestone === m.id ? " fav" : "") + "'><span class='emo'>" + m.emo + "</span>" + esc(L().milestones[m.id]) + "</div>";
-    }).join("");
-    var fav = favMilestone(), box = "";
-    if (S.milestone === "custom") box = "⭐ <b>" + t("yourMs") + "</b> " + esc(S.milestoneOther) + "<br><span class='small muted'>" + t("msCustomHint") + "</span>";
-    else if (fav) {
-      var label = esc(L().milestones[fav.id]);
-      if (milestoneDone(fav, h.streakStart, h.saidNo)) box = "⭐ <b>" + t("msReached", { ms: label }) + "</b>";
-      else if (fav.id === "sayno") box = "⭐ <b>" + t("yourMs") + "</b> " + label + "<br><span class='small muted'>" + t("msSayNoHint") + "</span>";
-      else box = "⭐ <b>" + t("yourMs") + "</b> " + label + "<br><span class='small muted'>" + t("msToGo", { t: countdownText(favTarget(fav, h) - Date.now()) }) + "</span>";
-    }
-    $("favBox").innerHTML = box; $("favBox").classList.toggle("hidden", !box);
-    var b = $("saidNoBtn");
-    b.textContent = h.saidNo ? t("saidNoDone", { date: new Date(h.saidNo + "T12:00").toLocaleDateString(L().locale, { month: "short", day: "numeric" }) }) : t("saidNoBtn");
-    b.disabled = !!h.saidNo;
+    S.habits.forEach(function (h, i) {
+      var strip = $("ms" + i); if (!strip) return;
+      var done = MILESTONES.filter(function (m) { return milestoneDone(m, h.streakStart, h.saidNo); });
+      strip.innerHTML = MILESTONES.map(function (m) {
+        var on = done.indexOf(m) >= 0;
+        return "<span class='m" + (on ? " done" : "") + "' title='" + esc(L().milestones[m.id]) + "' aria-label='" + esc(L().milestones[m.id]) + (on ? " ✓" : "") + "'>" + m.emo + "</span>";
+      }).join("") + "<small>" + t("msCount", { n: done.length, total: MILESTONES.length }) + "</small>";
+      var b = document.querySelector("[data-sayno='" + i + "']");
+      if (b) {
+        b.textContent = h.saidNo ? t("saidNoDone", { date: new Date(h.saidNo + "T12:00").toLocaleDateString(L().locale, { month: "short", day: "numeric" }) }) : t("saidNoBtn");
+        b.disabled = !!h.saidNo;
+      }
+    });
     renderFavLines();
   }
   /* one short line per habit card: how far to the milestone you're waiting for */
@@ -938,7 +963,9 @@
     var fav = favMilestone();
     S.habits.forEach(function (h, i) {
       var el = $("fav" + i); if (!el) return;
-      if (!fav || fav.id === "sayno" || !h.streakStart || Date.now() < h.streakStart) { el.textContent = ""; return; }
+      if (S.milestone === "custom") { el.textContent = "⭐ " + S.milestoneOther; return; }
+      if (!fav || !h.streakStart || Date.now() < h.streakStart) { el.textContent = ""; return; }
+      if (fav.id === "sayno") { el.textContent = "⭐ " + L().milestones.sayno + (h.saidNo ? " ✓" : ""); return; }
       var label = L().milestones[fav.id];
       el.textContent = milestoneDone(fav, h.streakStart, h.saidNo) ? "⭐ " + label + " ✓" : "⭐ " + label + " · " + t("msToGo", { t: countdownText(favTarget(fav, h) - Date.now()) });
     });
@@ -1102,12 +1129,10 @@
     var keys = S.habits.map(function (h) { return h.key; });
     var mine = list.filter(function (a) { return a.habits.some(function (k) { return keys.indexOf(k) >= 0; }); });
     var gen = list.filter(function (a) { return a.habits.indexOf("general") >= 0 && mine.indexOf(a) < 0; });
-    html += section(t("forYou"), mine) + section(t("general"), gen);
-    HABIT_ORDER.forEach(function (h) {
-      if (keys.indexOf(h) >= 0 || h === "other") return;
-      var items = list.filter(function (a) { return a.habits[0] === h && mine.indexOf(a) < 0; });
-      html += section(EMO[h] + " " + L().habits[h].label, items);
+    S.habits.forEach(function (h) {
+      html += section(EMO[h.key] + " " + habitLabel(h), mine.filter(function (a) { return a.habits.indexOf(h.key) >= 0; }));
     });
+    html += section("🌊 " + t("general"), gen);
     html += "<p class='small muted' style='margin-top:18px'>" + t("learnNote") + "</p>";
     p.innerHTML = html;
   }
@@ -1132,7 +1157,7 @@
       stat(nf(s.users), t("cUsers")) + stat(nf(s.checkedInToday), t("cToday")) +
       stat((+s.avgStreakDays || 0).toLocaleString(L().locale), t("cAvg")) + stat(nf(s.longestStreakDays), t("cLongest")) +
       "</div><div class='stats' style='grid-template-columns:1fr;margin-top:10px'>" + stat(nf(s.totalCleanDays), t("cTotal")) + "</div></div>" +
-      "<div class='card'><h3>" + t("cByHabit") + "</h3><div class='bars'>" +
+      "<div class='card'><div class='bars'>" +
       keys.map(function (k) {
         var label = (EMO[k] || "✨") + " " + (L().habits[k] ? L().habits[k].label : k);
         return "<div class='bar'><span>" + esc(label) + "</span><div class='track'><div class='fill' style='width:" + Math.max(4, by[k] / max * 100) + "%'></div></div><b>" + nf(by[k]) + "</b></div>";
@@ -1171,7 +1196,7 @@
         "<div class='row'><div><label class='field' for='prLang'>" + t("language") + "</label><select id='prLang'><option value='en'" + (S.lang === "en" ? " selected" : "") + ">English</option><option value='he'" + (S.lang === "he" ? " selected" : "") + ">עברית</option></select></div>" +
         "<div><label class='field' for='prGender'>" + t("gender") + "</label><select id='prGender'><option value='m'" + (S.gender !== "f" ? " selected" : "") + ">" + t("male") + "</option><option value='f'" + (S.gender === "f" ? " selected" : "") + ">" + t("female") + "</option></select></div>" +
         "<div><label class='field' for='prTime'>" + t("remTime") + "</label><input type='time' id='prTime' value='" + esc(S.reminderTime) + "'></div>" +
-        "<div><label class='field' for='prCur'>" + t("currency") + "</label>" + currencySelect().replace("id='currency'", "id='prCur'") + "</div></div>" +
+        "</div>" +
         "<div class='error' id='prErr'></div><div class='actions' style='margin-top:8px'><button class='primary' id='prSave'>" + t("save") + "</button></div></div>" +
       habitsCardHtml() +
       "<div class='card'><h3>" + t("notifTitle") + "</h3>" + notifHtml + "</div>" +
@@ -1187,7 +1212,7 @@
         S.reminderTime = newTime;
         S.lastPrompt = (reminderTsFor(new Date()) <= Date.now() || S.checkins[todayStr()]) ? todayStr() : null;
       }
-      S.name = name; S.age = age; S.about = $("prAbout").value; S.currency = $("prCur").value; S.lang = $("prLang").value; S.gender = $("prGender").value;
+      S.name = name; S.age = age; S.about = $("prAbout").value; S.lang = $("prLang").value; S.gender = $("prGender").value;
       save(); if (langChanged) applyLang(); showTab("pProfile"); toast(t("saved"));
     });
     $("pProfile").querySelectorAll("[data-rmh]").forEach(function (b) { b.addEventListener("click", function () { askRemoveHabit(+b.dataset.rmh); }); });

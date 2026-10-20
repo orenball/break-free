@@ -292,15 +292,16 @@
 <div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="i18n.js"></script>
-<script src="articles.js" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
-<script src="firebase-config.js"></script>
+<script src="i18n.js?v=2026.10.20-3"></script>
+<script src="articles.js?v=2026.10.20-3" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
+<script src="firebase-config.js?v=2026.10.20-3"></script>
 <script>
 (function () {
   "use strict";
 
   /* ================= constants ================= */
   var KEY = "breakFree.app.v1";
+  var APP_VERSION = "2026.10.20-3"; /* bump when publishing; shown at the bottom of Profile */
   var FB_VER = "10.12.2";
   var EMO = {
     alcohol: "🍺", cigarettes: "🚬", weed: "🌿", drugs: "💉", pills: "💊", junkfood: "🍔", sweets: "🍬",
@@ -1241,7 +1242,8 @@
       "<div class='card'><h3>" + t("notifTitle") + "</h3>" + notifHtml +
         (FB.uid ? "<p class='small muted' style='margin:10px 0 0'>" + t("deviceCode", { code: FB.uid.slice(-6) }) + "</p>" : "") + "</div>" +
       (installEvent ? "<div class='card'><div class='actions'><button id='installBtn'>" + t("installBtn") + "</button></div></div>" : "") +
-      "<div class='card'><div class='actions'><button class='danger' id='resetBtn'>" + t("resetBtn") + "</button></div></div>";
+      "<div class='card'><div class='actions'><button class='danger' id='resetBtn'>" + t("resetBtn") + "</button></div></div>" +
+      "<p class='small muted' style='text-align:center'>" + t("version", { v: APP_VERSION }) + (FB.uid ? " · " + t("deviceCode", { code: FB.uid.slice(-6) }) : "") + "</p>";
 
     $("prSave").addEventListener("click", function () {
       var name = $("prName").value.trim(), age = $("prAge").value, a = +age;

@@ -14,6 +14,16 @@ if (self.BF_FIREBASE_CONFIG) {
 self.addEventListener("install", function () { self.skipWaiting(); });
 self.addEventListener("activate", function (e) { e.waitUntil(self.clients.claim()); });
 
+/* Always ask the server for the newest app files (falls back to the saved copy when offline),
+   so an installed app picks up updates the next time it opens. */
+self.addEventListener("fetch", function (event) {
+  var req = event.request, url = new URL(req.url);
+  if (req.method !== "GET" || url.origin !== self.location.origin) return;
+  if (req.mode === "navigate" || /\.(js|webmanifest|html)$/.test(url.pathname)) {
+    event.respondWith(fetch(req, { cache: "no-cache" }).catch(function () { return caches.match(req); }));
+  }
+});
+
 /* Tapping the notification opens (or focuses) the app on the check-in. */
 self.addEventListener("notificationclick", function (event) {
   event.notification.close();

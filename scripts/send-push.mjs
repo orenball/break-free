@@ -20,10 +20,17 @@ const BAD_TOKEN_CODES = new Set([
   "messaging/invalid-argument",
 ]);
 
+// "checkin" = the day's last reminder (asks how the day went); "boost" = earlier reminders.
+// Hebrew is written so it reads correctly for both men and women.
 const TEXT = {
-  en: { title: "Break Free", body: "Did you get through today without giving in? Tap to check in." },
-  // written so it reads correctly for both men and women
-  he: { title: "Break Free", body: "הצלחת לעבור את היום בלי להישבר? לחיצה כאן כדי לסמן." },
+  en: {
+    checkin: { title: "Break Free", body: "Did you get through today without giving in? Tap to check in." },
+    boost: { title: "Break Free 💚", body: "Keep going — you have a good reason for doing this. Tap to read it." },
+  },
+  he: {
+    checkin: { title: "Break Free", body: "הצלחת לעבור את היום בלי להישבר? לחיצה כאן כדי לסמן." },
+    boost: { title: "Break Free 💚", body: "ממשיכים חזק — יש לך סיבה טובה לעשות את זה. לחיצה כאן כדי לקרוא אותה." },
+  },
 };
 
 /* ---------- pure logic (exercised by --dry-run) ---------- */
@@ -46,15 +53,31 @@ export function localParts(now, tz) {
   return { date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}` };
 }
 
-// Why a user should or shouldn't get today's push. Returns { push, reason, localDate }.
+// The user's reminder times, sorted. Older app versions sent a single `reminderTime`.
+export function reminderTimes(u) {
+  const list = Array.isArray(u.reminderTimes) && u.reminderTimes.length ? u.reminderTimes : [u.reminderTime];
+  return [...new Set(list.filter((x) => /^\d{2}:\d{2}$/.test(x || "")))].sort();
+}
+
+// Which reminder (if any) to send now. Returns { push, kind, reason, localDate, slots }.
+// `slots` are the reminder times this send covers; they get marked as done for today.
 export function pushDecision(u, now) {
   if (!u.notify || !u.fcmToken) return { push: false, reason: "reminders off" };
-  if (!/^\d{2}:\d{2}$/.test(u.reminderTime || "")) return { push: false, reason: "no reminder time" };
+  const times = reminderTimes(u);
+  if (!times.length) return { push: false, reason: "no reminder time" };
   const { date, time } = localParts(now, u.tz);
-  if (time < u.reminderTime) return { push: false, reason: "not time yet", localDate: date };
-  if (u.lastPushDate === date) return { push: false, reason: "already pushed today", localDate: date };
   if (u.lastCheckinDate === date) return { push: false, reason: "already checked in today", localDate: date };
-  return { push: true, reason: "due", localDate: date };
+  const sent = { ...(u.lastPushes || {}) };
+  const checkinAt = times[times.length - 1];
+  if (!sent[checkinAt] && u.lastPushDate) sent[checkinAt] = u.lastPushDate; // older single-reminder records
+  const due = times.filter((tm) => time >= tm && sent[tm] !== date);
+  if (!due.length) {
+    const passed = times.some((tm) => time >= tm);
+    return { push: false, reason: passed ? "already pushed today" : "not time yet", localDate: date };
+  }
+  // If the job ran late and several are due at once, send one message: the daily question wins.
+  const kind = due.includes(checkinAt) ? "checkin" : "boost";
+  return { push: true, kind, reason: kind === "checkin" ? "daily question due" : "boost due", localDate: date, slots: due };
 }
 
 // Anonymous community totals — aggregates only.
@@ -88,17 +111,17 @@ export function computeSummary(users, now) {
   };
 }
 
-export function buildMessage(u, appUrl) {
-  const txt = TEXT[u.lang] || TEXT.en;
+export function buildMessage(u, appUrl, kind = "checkin") {
+  const txt = (TEXT[u.lang] || TEXT.en)[kind] || TEXT.en.checkin;
   const base = appUrl.endsWith("/") ? appUrl : appUrl + "/";
   return {
     token: u.fcmToken,
     notification: { title: txt.title, body: txt.body },
     webpush: {
-      fcmOptions: { link: base + "#checkin" },
-      notification: { icon: base + "icons/icon-192.png", tag: "breakfree-daily", lang: u.lang === "he" ? "he" : "en", dir: u.lang === "he" ? "rtl" : "ltr" },
+      fcmOptions: { link: base + (kind === "checkin" ? "#checkin" : "#why") },
+      notification: { icon: base + "icons/icon-192.png", tag: "breakfree-" + kind, lang: u.lang === "he" ? "he" : "en", dir: u.lang === "he" ? "rtl" : "ltr" },
     },
-    data: { type: "checkin" },
+    data: { type: kind },
   };
 }
 
@@ -117,8 +140,8 @@ async function dryRun(now) {
   for (const u of users) {
     const d = pushDecision(u, now);
     const local = localParts(now, u.tz);
-    console.log(`${d.push ? "PUSH" : "skip"}  ${u._label.padEnd(36)} local ${local.date} ${local.time}  reminder ${u.reminderTime || "-"}  → ${d.reason}`);
-    if (d.push) console.log(`      "${buildMessage(u, "https://example.github.io/break-free/").notification.body}"`);
+    console.log(`${d.push ? "PUSH" : "skip"}  ${u._label.padEnd(40)} local ${local.date} ${local.time}  reminders ${reminderTimes(u).join(",") || "-"}  → ${d.reason}`);
+    if (d.push) console.log(`      "${buildMessage(u, "https://example.github.io/break-free/", d.kind).notification.body}"`);
   }
   console.log("\nstats/summary would be:");
   console.log(JSON.stringify(computeSummary(users, now), null, 2));
@@ -149,15 +172,23 @@ async function realRun(now) {
   const due = [];
   for (const u of users) {
     const d = pushDecision(u, now);
-    if (d.push) due.push({ u, localDate: d.localDate });
+    if (d.push) due.push({ u, d });
   }
 
   let sent = 0, failed = 0, invalid = 0;
   for (const group of chunks(due, CHUNK)) {
-    const results = await Promise.allSettled(group.map(({ u }) => messaging.send(buildMessage(u, appUrl))));
+    const results = await Promise.allSettled(group.map(({ u, d }) => messaging.send(buildMessage(u, appUrl, d.kind))));
     await Promise.allSettled(results.map((r, i) => {
-      const { u, localDate } = group[i];
-      if (r.status === "fulfilled") { sent++; return u.ref.update({ lastPushDate: localDate }); }
+      const { u, d } = group[i];
+      if (r.status === "fulfilled") {
+        sent++;
+        // remember which of today's reminders went out (older days are dropped)
+        const lastPushes = Object.fromEntries(Object.entries(u.lastPushes || {}).filter(([, day]) => day === d.localDate));
+        d.slots.forEach((tm) => { lastPushes[tm] = d.localDate; });
+        const update = { lastPushes };
+        if (d.kind === "checkin") update.lastPushDate = d.localDate;
+        return u.ref.update(update);
+      }
       const code = r.reason && r.reason.code;
       if (BAD_TOKEN_CODES.has(code)) { invalid++; return u.ref.update({ fcmToken: null, notify: false }); }
       failed++;

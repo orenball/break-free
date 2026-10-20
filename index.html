@@ -148,6 +148,9 @@
   .ms-strip small { color: var(--muted); margin-inline-start: auto; }
   .habit-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
   .habit-row:last-child { border-bottom: none; }
+  .rem-row { flex-wrap: nowrap; margin-bottom: 8px; align-items: center; }
+  .rem-row input { flex: 1 1 auto; }
+  .rem-row button { flex: 0 0 auto; }
   .habit-row small { color: var(--muted); }
   .fav-box { background: var(--gold-soft); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
   .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
@@ -304,12 +307,16 @@
     energy: "⚡", coffee: "☕", porn: "🔞", nailbiting: "😬", betting: "🎰", tiktok: "🎵", reels: "📱", other: "✨"
   };
   var HABIT_META = {
-    alcohol: { per: "week", costly: true }, cigarettes: { per: "day", costly: true }, weed: { per: "day", costly: true },
-    drugs: { per: "week", costly: true }, pills: { per: "day", costly: true }, junkfood: { per: "week", costly: true },
-    sweets: { per: "day", costly: true }, energy: { per: "day", costly: true }, coffee: { per: "day", costly: true },
+    /* countable habits ask for a number; "how often" habits pick from FREQ */
+    alcohol: { per: "week", costly: true }, cigarettes: { per: "day", costly: true }, weed: { choice: true, costly: true },
+    drugs: { choice: true, costly: true }, pills: { per: "day", costly: true }, junkfood: { choice: true, costly: true },
+    sweets: { choice: true, costly: true }, energy: { per: "day", costly: true }, coffee: { per: "day", costly: true },
     porn: { per: "day" }, nailbiting: { choice: true }, betting: { per: "week", money: true },
-    tiktok: { per: "day" }, reels: { per: "day" }, other: { per: "day", costly: true }
+    tiktok: { per: "day" }, reels: { per: "day" }, other: { choice: true, costly: true }
   };
+  /* how-often answers, as times per day (used to estimate what was avoided) */
+  var FREQ_PER_DAY = [1 / 7, 3 / 7, 1, 2.5, 5];
+  function freqPerDay(h) { return h.freqChoice === "" ? 0 : (FREQ_PER_DAY[+h.freqChoice] || 0); }
   var HABIT_ORDER = Object.keys(EMO);
   var GOAL_IDS = ["happiness", "discipline", "health", "money", "sleep", "time", "relationships", "confidence", "focus"];
   var BELIEF_IDS = ["yes", "think", "unsure", "scared"];
@@ -330,7 +337,7 @@
       habits: [], currency: "₪",
       goals: [], goalOther: "", improve: "", critical: 7, belief: null,
       share: null, shareName: "", milestone: null, milestoneOther: "",
-      why: "", reminderTime: "20:00",
+      why: "", reminderTimes: ["20:00"],
       checkins: {}, lastPrompt: null,
       shareId: null, notify: false, fcmToken: null
     };
@@ -359,6 +366,16 @@
       s.habits = [h];
     }
     ["habit", "habitOther"].concat(OLD_KEYS).forEach(function (k) { delete s[k]; });
+    var OLD_PER = { weed: 1, drugs: 1 / 7, junkfood: 1 / 7, sweets: 1, other: 1 };
+    (s.habits || []).forEach(function (h) {
+      if (OLD_PER[h.key] && h.freqChoice === "" && h.amount !== "" && !isNaN(+h.amount)) {
+        var perDay = +h.amount * OLD_PER[h.key], best = 0;
+        [1 / 7, 3 / 7, 1, 2.5, 5].forEach(function (v, j) { if (Math.abs(v - perDay) < Math.abs([1 / 7, 3 / 7, 1, 2.5, 5][best] - perDay)) best = j; });
+        h.freqChoice = String(best);
+      }
+    });
+    if (!Array.isArray(s.reminderTimes)) s.reminderTimes = [s.reminderTime || "20:00"];
+    delete s.reminderTime;
   }
   function save() {
     try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
@@ -566,7 +583,7 @@
           var q = h.key === "other" ? x.q.replace("?", " (" + h.other + ")?") : x.q;
           if (multi) html += "<h3 style='margin-top:18px'>" + EMO[h.key] + " " + esc(habitLabel(h)) + "</h3>";
           if (m.choice) {
-            html += "<label class='field'>" + esc(q) + "</label><div class='opts'>" + x.choice.map(function (c, j) {
+            html += "<label class='field'>" + esc(q) + "</label><div class='opts'>" + L().freq.map(function (c, j) {
               return "<button class='opt" + (h.freqChoice === String(j) ? " selected" : "") + "' data-freq='" + i + ":" + j + "'>" + esc(c) + "</button>";
             }).join("") + "</div>";
           } else if (m.money) {
@@ -700,16 +717,16 @@
           "<p class='note' style='margin-top:0'>💡 " + esc(whyHint()) + "</p>" +
           "<label class='field' for='why'>" + t("mySentence") + "</label><textarea id='why' maxlength='280' placeholder='" + esc(t("whyPh")) + "'>" + esc(S.why) + "</textarea>" +
           "<div class='small muted' id='whyCount'></div>" +
-          "<label class='field' for='remTime'>" + t("remTime") + "</label><input type='time' id='remTime' value='" + esc(S.reminderTime) + "'>" +
+          "<label class='field'>" + t("remTimes") + "</label><div id='remBox'></div>" +
           "<p class='small muted'>" + t("remSub") + "</p>";
         return html;
       },
       bind: function () {
         $("why").addEventListener("input", function () { S.why = this.value; whyWarned = false; updateWhyCount(); });
-        ["input", "change"].forEach(function (ev) { $("remTime").addEventListener(ev, function () { S.reminderTime = this.value; }); });
+        mountRemEditor("remBox", S.reminderTimes);
         updateWhyCount();
       },
-      validate: function () { return validateWhy(S.why) || (!S.reminderTime ? t("errRem") : null); }
+      validate: function () { S.reminderTimes = cleanTimes(S.reminderTimes); return validateWhy(S.why) || (!S.reminderTimes.length ? t("errRem") : null); }
     },
     { // summary
       render: function () {
@@ -721,7 +738,7 @@
           [t("sNow"), S.habits.map(function (h) { return (S.habits.length > 1 ? habitLabel(h) + ": " : "") + usageText(h); }).join(" · ")],
           [t("sAim"), joinNice(goalLabels())], [t("sImprove"), S.improve],
           [t("sCrit"), S.critical + " / 10"], [t("sBelief"), L().belief[S.belief].label], [t("sShare"), share],
-          [t("sMs"), milestoneLabel(S.milestone)], [t("sWhy"), S.why], [t("sRem"), S.reminderTime]
+          [t("sMs"), milestoneLabel(S.milestone)], [t("sWhy"), S.why], [t("sRem"), cleanTimes(S.reminderTimes).join(" · ")]
         ];
         return "<h2>" + t("sumTitle") + "</h2><p class='sub'>" + t("sumSub") + "</p><dl class='summary'>" +
           rows.map(function (r) { return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("") + "</dl>";
@@ -752,6 +769,29 @@
     var w = S.why.trim();
     el.textContent = t("chars", { n: w.length }) + (w ? " · " + (mentionsGoal(w) ? t("hasGoal") : t("addGoal")) : "");
   }
+  /* reminder times: up to 3; the latest one of the day asks the daily question */
+  var MAX_REMINDERS = 3;
+  function cleanTimes(list) {
+    return (list || []).filter(function (x, i, a) { return /^\d{2}:\d{2}$/.test(x) && a.indexOf(x) === i; }).sort();
+  }
+  function checkinTime() { var l = cleanTimes(S.reminderTimes); return l.length ? l[l.length - 1] : "20:00"; }
+  function mountRemEditor(boxId, list) {
+    var box = $(boxId); if (!box) return;
+    if (!list.length) list.push("20:00");
+    box.innerHTML = list.map(function (tm, i) {
+      return "<div class='row rem-row'><input type='time' id='" + boxId + i + "' value='" + esc(tm) + "' aria-label='" + esc(t("remN", { n: i + 1 })) + "'>" +
+        (list.length > 1 ? "<button class='ghost' data-remdel='" + i + "' aria-label='" + esc(t("remove")) + "'>✕</button>" : "") + "</div>";
+    }).join("") + (list.length < MAX_REMINDERS ? "<button class='ghost' id='" + boxId + "Add'>➕ " + t("remAdd") + "</button>" : "");
+    list.forEach(function (tm, i) {
+      ["input", "change"].forEach(function (ev) { $(boxId + i).addEventListener(ev, function () { list[i] = this.value; }); });
+    });
+    box.querySelectorAll("[data-remdel]").forEach(function (b) { b.addEventListener("click", function () { list.splice(+b.dataset.remdel, 1); mountRemEditor(boxId, list); }); });
+    if ($(boxId + "Add")) $(boxId + "Add").addEventListener("click", function () {
+      var last = cleanTimes(list); last = last.length ? last[0] : "20:00";
+      var h = Math.max(0, +last.split(":")[0] - 4);
+      list.push(pad(h) + ":00"); mountRemEditor(boxId, list);
+    });
+  }
   function findHabit(key) { return S.habits.filter(function (h) { return h.key === key; })[0]; }
   function startTs(h) {
     var p = h.startDate.split("-").map(Number), q = (h.startTime || "00:00").split(":").map(Number);
@@ -759,7 +799,7 @@
   }
   function usageText(h) {
     var x = hab(h.key), m = HABIT_META[h.key] || {}, per = L().per;
-    if (m.choice) return x.choice[+h.freqChoice] || "";
+    if (m.choice) return L().freq[+h.freqChoice] || "";
     if (m.money) return S.currency + h.amount + " " + per.week + ", " + h.amount2 + " " + x.unit + " " + per.week;
     var s = h.amount + " " + x.unit + " " + per[m.per];
     if (h.cost) s += " (" + S.currency + h.cost + " " + per.week + ")";
@@ -804,6 +844,7 @@
     $("app").classList.remove("hidden"); $("tabbar").classList.remove("hidden");
     showTab(currentTab);
     if (hash === "#checkin") { history.replaceState(null, "", location.pathname + location.search); showTab("pHome"); openCheckin(); }
+    if (hash === "#why") { history.replaceState(null, "", location.pathname + location.search); showTab("pWhy"); }
   }
   window.addEventListener("hashchange", route);
 
@@ -910,15 +951,13 @@
       var x = hab(h.key), m = HABIT_META[h.key] || {}, ms = Math.max(0, streakMsOf(h)), days = ms / 864e5, best = Math.max(h.bestMs, ms);
       var html = stat(t("dh", { d: Math.floor(best / 864e5), h: Math.floor(best / 36e5) % 24 }), t("bestStreak")) +
         stat(h.restarts, h.restarts === 1 ? t("restartOne") : t("restartMany"));
-      if (!m.choice) {
-        if (m.money) {
-          html += stat("~" + fmtNum((+h.amount2 || 0) / 7 * days), x.avoided);
-          html += stat(S.currency + fmtNum((+h.amount || 0) / 7 * days), t("moneyKept"));
-        } else {
-          var perDay = m.per === "day" ? (+h.amount || 0) : (+h.amount || 0) / 7;
-          html += stat("~" + fmtNum(perDay * days), x.avoided);
-          if (h.cost) html += stat(S.currency + fmtNum((+h.cost) / 7 * days), t("moneySaved"));
-        }
+      if (m.money) {
+        html += stat("~" + fmtNum((+h.amount2 || 0) / 7 * days), x.avoided);
+        html += stat(S.currency + fmtNum((+h.amount || 0) / 7 * days), t("moneyKept"));
+      } else {
+        var perDay = m.choice ? freqPerDay(h) : m.per === "day" ? (+h.amount || 0) : (+h.amount || 0) / 7;
+        if (!m.choice || h.freqChoice !== "") html += stat("~" + fmtNum(perDay * days), x.avoided);
+        if (h.cost) html += stat(S.currency + fmtNum((+h.cost) / 7 * days), t("moneySaved"));
       }
       $("stats" + i).innerHTML = html;
     });
@@ -1051,7 +1090,7 @@
   }
   /* in-app fallback: if the app is open when the check-in time passes */
   function reminderTsFor(d) {
-    var q = (S.reminderTime || "20:00").split(":").map(Number);
+    var q = checkinTime().split(":").map(Number);
     return new Date(d.getFullYear(), d.getMonth(), d.getDate(), q[0], q[1]).getTime();
   }
   function checkReminder() {
@@ -1181,7 +1220,7 @@
   }
   function renderProfile() {
     var ns = notifState(), notifHtml;
-    if (ns === "on") notifHtml = "<p class='small'>" + t("notifOn") + " · " + esc(S.reminderTime) + "</p><div class='actions'><button id='notifOffBtn'>" + t("notifTurnOff") + "</button></div>";
+    if (ns === "on") notifHtml = "<p class='small'>" + t("notifOn") + " · " + esc(cleanTimes(S.reminderTimes).join(" · ")) + "</p><div class='actions'><button id='notifOffBtn'>" + t("notifTurnOff") + "</button></div>";
     else if (ns === "ios") notifHtml = "<div class='note gold'><b>" + t("iosGuideTitle") + "</b><br>" + t("iosGuide") + "</div>";
     else if (ns === "blocked") notifHtml = "<p class='small'>" + t("notifBlocked") + "</p>";
     else if (ns === "unsupported") notifHtml = "<p class='small muted'>" + t("notifUnsupported") + "</p>";
@@ -1195,8 +1234,8 @@
         "<label class='field' for='prAbout'>" + t("about") + "</label><textarea id='prAbout' maxlength='500' placeholder='" + esc(t("aboutPh")) + "'>" + esc(S.about) + "</textarea>" +
         "<div class='row'><div><label class='field' for='prLang'>" + t("language") + "</label><select id='prLang'><option value='en'" + (S.lang === "en" ? " selected" : "") + ">English</option><option value='he'" + (S.lang === "he" ? " selected" : "") + ">עברית</option></select></div>" +
         "<div><label class='field' for='prGender'>" + t("gender") + "</label><select id='prGender'><option value='m'" + (S.gender !== "f" ? " selected" : "") + ">" + t("male") + "</option><option value='f'" + (S.gender === "f" ? " selected" : "") + ">" + t("female") + "</option></select></div>" +
-        "<div><label class='field' for='prTime'>" + t("remTime") + "</label><input type='time' id='prTime' value='" + esc(S.reminderTime) + "'></div>" +
         "</div>" +
+        "<label class='field'>" + t("remTimes") + "</label><div id='prRemBox'></div><p class='small muted'>" + t("remSub") + "</p>" +
         "<div class='error' id='prErr'></div><div class='actions' style='margin-top:8px'><button class='primary' id='prSave'>" + t("save") + "</button></div></div>" +
       habitsCardHtml() +
       "<div class='card'><h3>" + t("notifTitle") + "</h3>" + notifHtml + "</div>" +
@@ -1207,14 +1246,16 @@
       var name = $("prName").value.trim(), age = $("prAge").value, a = +age;
       if (!name) { $("prErr").textContent = t("errName"); return; }
       if (!age || isNaN(a) || a < 10 || a > 120) { $("prErr").textContent = t("errAge"); return; }
-      var newTime = $("prTime").value || S.reminderTime, langChanged = $("prLang").value !== S.lang || $("prGender").value !== S.gender;
-      if (newTime !== S.reminderTime) {
-        S.reminderTime = newTime;
-        S.lastPrompt = (reminderTsFor(new Date()) <= Date.now() || S.checkins[todayStr()]) ? todayStr() : null;
-      }
+      var times = cleanTimes(remDraft), langChanged = $("prLang").value !== S.lang || $("prGender").value !== S.gender;
+      if (!times.length) { $("prErr").textContent = t("errRem"); return; }
+      var oldCheckin = checkinTime();
+      S.reminderTimes = times;
+      if (checkinTime() !== oldCheckin) S.lastPrompt = (reminderTsFor(new Date()) <= Date.now() || S.checkins[todayStr()]) ? todayStr() : null;
       S.name = name; S.age = age; S.about = $("prAbout").value; S.lang = $("prLang").value; S.gender = $("prGender").value;
       save(); if (langChanged) applyLang(); showTab("pProfile"); toast(t("saved"));
     });
+    var remDraft = S.reminderTimes.slice();
+    mountRemEditor("prRemBox", remDraft);
     $("pProfile").querySelectorAll("[data-rmh]").forEach(function (b) { b.addEventListener("click", function () { askRemoveHabit(+b.dataset.rmh); }); });
     if ($("addHabitBtn")) $("addHabitBtn").addEventListener("click", function () { openAddHabit(null); });
     if ($("notifOnBtn")) $("notifOnBtn").addEventListener("click", enablePush);
@@ -1256,7 +1297,7 @@
       if (draft.key === "other") html += "<label class='field' for='ahOther'>" + t("otherWhat") + "</label><input type='text' id='ahOther' maxlength='40' placeholder='" + esc(t("otherPh")) + "' value='" + esc(draft.other) + "'>";
       html += "<div class='row'><div><label class='field' for='ahDate'>" + t("startDate") + "</label><input type='date' id='ahDate' value='" + esc(draft.startDate) + "'></div>" +
         "<div><label class='field' for='ahTime'>" + t("startTime") + "</label><input type='time' id='ahTime' value='" + esc(draft.startTime) + "'></div></div>";
-      if (m.choice) html += "<label class='field'>" + esc(x.q) + "</label><div class='opts'>" + x.choice.map(function (c, j) {
+      if (m.choice) html += "<label class='field'>" + esc(x.q) + "</label><div class='opts'>" + L().freq.map(function (c, j) {
         return "<button class='opt" + (draft.freqChoice === String(j) ? " selected" : "") + "' data-ahf='" + j + "'>" + esc(c) + "</button>"; }).join("") + "</div>";
       else {
         html += "<label class='field' for='ahAmt'>" + esc(x.q) + (m.money ? " (" + S.currency + ")" : "") + "</label><input type='number' id='ahAmt' min='0' step='any' inputmode='decimal' value='" + esc(draft.amount) + "'>";
@@ -1349,7 +1390,7 @@
       lang: S.lang, habit: first.key || null, habits: S.habits.map(function (h) { return h.key; }),
       streaks: S.habits.map(function (h) { return { habit: h.key, streakStart: h.streakStart, bestMs: h.bestMs || 0 }; }),
       streakStart: first.streakStart || null, bestMs: S.habits.reduce(function (m, h) { return Math.max(m, h.bestMs || 0); }, 0),
-      restarts: restarts, reminderTime: S.reminderTime, tz: tz,
+      restarts: restarts, reminderTime: checkinTime(), reminderTimes: cleanTimes(S.reminderTimes), tz: tz,
       notify: !!S.notify, fcmToken: S.fcmToken || null, checkinsYes: checkinsYes(),
       lastCheckinDate: lastCheckinDate(), updatedAt: Date.now()
     }, { merge: true })];

@@ -17,7 +17,9 @@ self.addEventListener("activate", function (e) { e.waitUntil(self.clients.claim(
 /* Tapping the notification opens (or focuses) the app on the check-in. */
 self.addEventListener("notificationclick", function (event) {
   event.notification.close();
-  var target = new URL("./#checkin", self.registration.scope).href;
+  /* encouragement reminders open the Why page; the daily question opens the check-in */
+  var isBoost = (event.notification.tag || "").indexOf("breakfree-boost") === 0;
+  var target = new URL(isBoost ? "./#why" : "./#checkin", self.registration.scope).href;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
       for (var i = 0; i < list.length; i++) {

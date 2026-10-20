@@ -139,5 +139,62 @@
     "lastCheckinDate": "2026-10-18",
     "lastPushDate": "2026-10-18",
     "updatedAt": 1792430000000
+  },
+  {
+    "_label": "3 reminders, morning boost due",
+    "lang": "he",
+    "habit": "sweets",
+    "habits": [
+      "sweets"
+    ],
+    "streaks": [
+      {
+        "habit": "sweets",
+        "streakStart": 1792200000000,
+        "bestMs": 0
+      }
+    ],
+    "reminderTimes": [
+      "09:00",
+      "21:00",
+      "23:00"
+    ],
+    "tz": "Asia/Jerusalem",
+    "notify": true,
+    "fcmToken": "test-token-9",
+    "checkinsYes": 2,
+    "lastCheckinDate": "2026-10-18",
+    "lastPushes": {
+      "09:00": "2026-10-18"
+    },
+    "updatedAt": 1792430000000
+  },
+  {
+    "_label": "2 reminders, daily question due",
+    "lang": "en",
+    "habit": "coffee",
+    "habits": [
+      "coffee"
+    ],
+    "streaks": [
+      {
+        "habit": "coffee",
+        "streakStart": 1792200000000,
+        "bestMs": 0
+      }
+    ],
+    "reminderTimes": [
+      "12:00",
+      "20:30"
+    ],
+    "tz": "Asia/Jerusalem",
+    "notify": true,
+    "fcmToken": "test-token-10",
+    "checkinsYes": 2,
+    "lastCheckinDate": "2026-10-18",
+    "lastPushes": {
+      "12:00": "2026-10-19"
+    },
+    "updatedAt": 1792430000000
   }
 ]

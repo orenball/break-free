@@ -167,8 +167,28 @@ async function realRun(now) {
   const messaging = getMessaging();
 
   const snap = await db.collection("users").get();
-  const users = snap.docs.map((d) => ({ ref: d.ref, ...d.data() }));
+  const users = snap.docs.map((d) => ({ id: d.id, ref: d.ref, ...d.data() }));
+  const code = (u) => "…" + u.id.slice(-6); // short, random device code shown in the app's Profile
 
+  // Troubleshooting: send one test notification to a single device, right now.
+  const testDevice = (process.env.TEST_DEVICE || "").trim();
+  if (testDevice) {
+    if (testDevice.length < 6) throw new Error("TEST_DEVICE must be the 6-character device code from Profile.");
+    const matches = users.filter((u) => u.id.endsWith(testDevice));
+    if (!matches.length) { console.log(`test: no device with code ${testDevice}`); return; }
+    for (const u of matches) {
+      if (!u.fcmToken) { console.log(`test ${code(u)}: this device has no notification sign-up (notify=${!!u.notify})`); continue; }
+      try {
+        const id = await messaging.send(buildMessage(u, appUrl, "checkin"));
+        console.log(`test ${code(u)}: accepted by Firebase (message ${id.split("/").pop()}), lang=${u.lang}, reminders=${reminderTimes(u).join(",")}`);
+      } catch (e) {
+        console.log(`test ${code(u)}: FAILED ${e.code || ""} ${e.message || e}`);
+      }
+    }
+    return;
+  }
+
+  console.log("devices: " + users.map((u) => `${code(u)}${u.notify && u.fcmToken ? " (reminders on)" : ""}`).join(", "));
   const due = [];
   for (const u of users) {
     const d = pushDecision(u, now);
@@ -182,6 +202,7 @@ async function realRun(now) {
       const { u, d } = group[i];
       if (r.status === "fulfilled") {
         sent++;
+        console.log(`sent ${d.kind} to ${code(u)}`);
         // remember which of today's reminders went out (older days are dropped)
         const lastPushes = Object.fromEntries(Object.entries(u.lastPushes || {}).filter(([, day]) => day === d.localDate));
         d.slots.forEach((tm) => { lastPushes[tm] = d.localDate; });
@@ -189,8 +210,9 @@ async function realRun(now) {
         if (d.kind === "checkin") update.lastPushDate = d.localDate;
         return u.ref.update(update);
       }
-      const code = r.reason && r.reason.code;
-      if (BAD_TOKEN_CODES.has(code)) { invalid++; return u.ref.update({ fcmToken: null, notify: false }); }
+      const errCode = r.reason && r.reason.code;
+      console.log(`failed ${d.kind} to ${code(u)}: ${errCode || (r.reason && r.reason.message) || "unknown"}`);
+      if (BAD_TOKEN_CODES.has(errCode)) { invalid++; return u.ref.update({ fcmToken: null, notify: false }); }
       failed++;
       return null;
     }));

@@ -1238,7 +1238,8 @@
         "<label class='field'>" + t("remTimes") + "</label><div id='prRemBox'></div><p class='small muted'>" + t("remSub") + "</p>" +
         "<div class='error' id='prErr'></div><div class='actions' style='margin-top:8px'><button class='primary' id='prSave'>" + t("save") + "</button></div></div>" +
       habitsCardHtml() +
-      "<div class='card'><h3>" + t("notifTitle") + "</h3>" + notifHtml + "</div>" +
+      "<div class='card'><h3>" + t("notifTitle") + "</h3>" + notifHtml +
+        (FB.uid ? "<p class='small muted' style='margin:10px 0 0'>" + t("deviceCode", { code: FB.uid.slice(-6) }) + "</p>" : "") + "</div>" +
       (installEvent ? "<div class='card'><div class='actions'><button id='installBtn'>" + t("installBtn") + "</button></div></div>" : "") +
       "<div class='card'><div class='actions'><button class='danger' id='resetBtn'>" + t("resetBtn") + "</button></div></div>";
 

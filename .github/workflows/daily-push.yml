@@ -3,7 +3,12 @@ name: Daily push
 on:
   schedule:
     - cron: "*/15 * * * *"   # every 15 minutes (GitHub may run it a few minutes late)
-  workflow_dispatch: {}       # "Run workflow" button for testing
+  workflow_dispatch:          # "Run workflow" button for testing
+    inputs:
+      test_device:
+        description: "Device code from the app's Profile: sends one test notification to that device now"
+        required: false
+        default: ""
 
 concurrency:
   group: daily-push
@@ -28,3 +33,4 @@ jobs:
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           APP_URL: ${{ vars.APP_URL }}
+          TEST_DEVICE: ${{ inputs.test_device }}

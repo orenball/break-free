@@ -20,7 +20,8 @@ It works in English and Hebrew.
 | `firebase-messaging-sw.js` | Receives the daily notification when the app is closed |
 | `manifest.webmanifest`, `icons/` | Make the app installable ("Add to Home Screen") |
 | `firestore.rules` | Who may read or write which data |
-| `scripts/`, `.github/workflows/` | The job that sends the daily notification every 15 minutes and calculates the community stats |
+| `scripts/`, `.github/workflows/` | The job that sends the daily reminders and calculates the community stats |
+| `scripts/apps-script-timer.gs` | A copy of the free Google Apps Script timer that starts the job every 5 minutes |
 
 ## Privacy
 - **Stays only on the phone:**
@@ -60,7 +61,16 @@ Claude creates the `break-free` repository and pushes the files after you approv
 In the repository on github.com, go to **Settings → Secrets and variables → Actions**:
 1. On the **Secrets** tab, click **New repository secret**. Name it `FIREBASE_SERVICE_ACCOUNT` and paste the whole content of the `.json` file from step 1.7.
 2. On the **Variables** tab, click **New repository variable**. Name it `APP_URL` and set it to `https://orenball.github.io/break-free/`.
-3. Go to **Actions → Daily push → Run workflow** once to test it. After that it runs by itself every 15 minutes.
+3. Go to **Actions → Daily push → Run workflow** once to test it.
+
+### 3b. A reliable timer (free, Google Apps Script)
+GitHub's own timer often runs hours late, so a small script in your Google account starts the job every 5 minutes.
+1. Create a GitHub key at https://github.com/settings/personal-access-tokens/new: only the **break-free** repository, **Actions: Read and write**. Note its expiry date — reminders stop when it expires, until you make a new one.
+2. At https://script.google.com create a project, paste `scripts/apps-script-timer.gs`, and save.
+3. **Project Settings → Script Properties:** add `GITHUB_TOKEN` with the key as its value, then **Save script properties**.
+4. Run **startJob** once (allow access when asked; the log should say *GitHub answered 204*), then run **createTimer** once.
+
+**Testing one phone:** in GitHub, **Actions → Daily push → Run workflow**, fill in the device code shown at the bottom of the app's Profile page. That sends one test notification to that phone.
 
 ### 4. Install it on a phone
 - **iPhone (iOS 16.4 or newer):**

@@ -153,6 +153,7 @@ export async function runDailyPush(opts) {
   const due = [];
   for (const u of users) {
     const d = pushDecision(u, now);
+    if (u.notify && u.fcmToken) log(`${code(u)}: ${d.push ? "due" : "skipped"} (${d.reason}; reminders ${reminderTimes(u).join(",")}, tz ${u.tz || "?"})`);
     if (d.push) due.push({ u, d });
   }
 

@@ -5,17 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Break Free</title>
 <meta name="description" content="Break free from a bad habit: a clean-time timer, daily check-ins, milestones and support.">
-<meta name="theme-color" content="#2f8f6b">
+<meta name="theme-color" content="#0f9d6b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Break Free">
 <style>
-  /* Calm "recovery green" palette; one column, cards, bottom tab bar */
+  /* Fresh "recovery green": mint-to-teal gradient for the why card and main action, rounded Rubik type */
   :root {
-    --bg: #f3f6f4; --panel: #ffffff; --panel-2: #eef3f0; --text: #1d2a25; --muted: #5f7069;
-    --border: #dbe4df; --accent: #2f8f6b; --accent-2: #3aa77e; --accent-soft: #dff1e9; --accent-text: #ffffff;
+    --bg: #f1f7f3; --panel: #ffffff; --panel-2: #edf4f0; --text: #15241e; --muted: #5a6d65;
+    --border: #d6e3dc; --accent: #0f9d6b; --accent-2: #13b37c; --accent-soft: #d9f3e7; --accent-text: #ffffff;
+    --grad: linear-gradient(135deg, #0f9d6b 0%, #14b8a6 100%); --grad-text: #ffffff; --glow: rgba(15, 157, 107, 0.32);
     --warn: #c9463f; --warn-soft: #fbe6e5; --gold: #c98f12; --gold-soft: #fbf0d5;
     --shadow: 0 6px 20px rgba(20, 40, 30, 0.10); --overlay: rgba(10, 20, 15, 0.55);
     --nav-h: 64px;
@@ -23,7 +27,8 @@
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #101613; --panel: #19221e; --panel-2: #212c27; --text: #e6efea; --muted: #94a59d;
-      --border: #2d3a34; --accent: #46b98d; --accent-2: #5ccc9f; --accent-soft: #1f3a2f; --accent-text: #0d1a14;
+      --border: #2a3832; --accent: #34d399; --accent-2: #6ee7b7; --accent-soft: #163a2c; --accent-text: #0b1a13;
+      --grad: linear-gradient(135deg, #059669 0%, #0d9488 100%); --grad-text: #ffffff; --glow: rgba(52, 211, 153, 0.28);
       --warn: #ef6f6a; --warn-soft: #3a2120; --gold: #f0bf4c; --gold-soft: #3a3020;
       --shadow: 0 6px 20px rgba(0, 0, 0, 0.4); --overlay: rgba(0, 0, 0, 0.65);
       color-scheme: dark;
@@ -33,7 +38,7 @@
   html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0; background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Hebrew", Arial, sans-serif;
+    font-family: "Rubik", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Hebrew", Arial, sans-serif;
     line-height: 1.5;
   }
   .wrap {
@@ -146,6 +151,29 @@
   .ms-strip .m { font-size: 20px; filter: grayscale(1); opacity: 0.35; }
   .ms-strip .m.done { filter: none; opacity: 1; }
   .ms-strip small { color: var(--muted); margin-inline-start: auto; }
+  .chart { margin-top: 12px; direction: ltr; }
+  .chart-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 4px; min-height: 18px; }
+  [dir=rtl] .chart-head { flex-direction: row-reverse; }
+  .chart-tip { color: var(--text); font-variant-numeric: tabular-nums; }
+  .chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .chart .grid { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 3; }
+  .chart .base { stroke: var(--border); stroke-width: 1; }
+  .chart .ax { fill: var(--muted); font-size: 9px; font-family: inherit; }
+  .chart .area { fill: var(--accent-soft); }
+  .chart .line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .chart .enddot { fill: var(--accent); stroke: var(--panel); stroke-width: 2; }
+  .chart .slipdot { fill: var(--warn); stroke: var(--panel); stroke-width: 2; }
+  .chart .cross { stroke: var(--muted); stroke-width: 1; }
+  .chart .hit { fill: transparent; cursor: crosshair; }
+  .moods { display: flex; justify-content: center; gap: 6px; margin: 6px 0 2px; }
+  .moods button { font-size: 26px; min-height: 48px; padding: 6px 8px; background: transparent; border-color: transparent; }
+  .moods button.selected { transform: scale(1.15); }
+  .day small { display: block; font-size: 13px; line-height: 1; min-height: 13px; }
+  .journal { display: flex; flex-direction: column; gap: 10px; }
+  .jrow { display: flex; gap: 10px; align-items: flex-start; }
+  .jrow .jm { font-size: 22px; line-height: 1.2; }
+  .jrow small { display: block; color: var(--muted); }
+  .jrow p { margin: 0; overflow-wrap: anywhere; }
   .habit-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); }
   .habit-row:last-child { border-bottom: none; }
   .rem-row { flex-wrap: nowrap; margin-bottom: 8px; align-items: center; }
@@ -222,6 +250,36 @@
   .confetti { position: fixed; top: -20px; width: 10px; height: 14px; z-index: 70; pointer-events: none; border-radius: 2px; animation: fall linear forwards; }
   @keyframes fall { to { transform: translateY(105vh) rotate(720deg); opacity: 0.7; } }
   @media (prefers-reduced-motion: reduce) { .confetti { display: none; } .toast, .progress > div { transition: none; } }
+  /* ---------- livelier look ---------- */
+  header.top h1 { font-size: 24px; font-weight: 800; }
+  h2, h3 { font-weight: 700; }
+  .card { border-radius: 22px; border-color: transparent; box-shadow: 0 8px 24px rgba(15, 60, 40, 0.08); }
+  .why-card, .why-big { background: var(--grad); color: var(--grad-text); font-style: normal; font-weight: 500; box-shadow: 0 10px 28px var(--glow); }
+  .why-card .eyebrow, .why-big .eyebrow { color: rgba(255, 255, 255, 0.85); }
+  .primary { background: var(--grad) !important; border-color: transparent !important; color: var(--grad-text) !important; font-weight: 700; }
+  #checkinNowBtn { min-height: 56px; font-size: 17px; border-radius: 18px; box-shadow: 0 8px 20px var(--glow); }
+  #checkinNowBtn.pulse { animation: glow 2.6s ease-in-out infinite; }
+  @keyframes glow { 0%, 100% { box-shadow: 0 8px 18px var(--glow); } 50% { box-shadow: 0 8px 34px var(--glow), 0 0 0 4px var(--accent-soft); } }
+  .timer div { background: var(--accent-soft); border-radius: 16px; }
+  .timer b { color: var(--accent); font-weight: 800; font-size: 36px; }
+  .hc-head h3 { font-size: 19px; }
+  .stat { border-radius: 16px; }
+  .stat b { font-weight: 700; }
+  button, a.btn { border-radius: 14px; transition: transform 0.12s ease, box-shadow 0.2s ease, background-color 0.2s ease; }
+  button:active:not(:disabled), a.btn:active { transform: scale(0.97); }
+  .lang-btns button { font-size: 22px; font-weight: 700; }
+  .tab { isolation: isolate; position: relative; }
+  .tab .ico { transition: transform 0.2s ease; }
+  .tab.active .ico { transform: translateY(-1px) scale(1.12); }
+  .tab.active::before { content: ""; position: absolute; top: 6px; left: 50%; width: 46px; height: 30px; margin-left: -23px; border-radius: 99px; background: var(--accent-soft); z-index: -1; }
+  /* no fill mode: if a phone skips animations, the page simply shows as normal */
+  .page.enter { animation: rise 0.3s ease-out; }
+  @keyframes rise { from { opacity: 0.4; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (max-width: 420px) { .timer b { font-size: 28px; } }
+  @media (prefers-reduced-motion: reduce) {
+    #checkinNowBtn.pulse, .page.enter { animation: none; }
+    button, a.btn, .tab .ico { transition: none; }
+  }
   .hidden { display: none !important; }
   @media (max-width: 420px) { .timer b { font-size: 26px; } .card { padding: 16px; } .why-big { font-size: 21px; } }
 </style>
@@ -292,16 +350,16 @@
 <div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="i18n.js?v=2026.10.20-3"></script>
-<script src="articles.js?v=2026.10.20-3" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
-<script src="firebase-config.js?v=2026.10.20-3"></script>
+<script src="i18n.js?v=2026.10.21-1"></script>
+<script src="articles.js?v=2026.10.21-1" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
+<script src="firebase-config.js?v=2026.10.21-1"></script>
 <script>
 (function () {
   "use strict";
 
   /* ================= constants ================= */
   var KEY = "breakFree.app.v1";
-  var APP_VERSION = "2026.10.20-3"; /* bump when publishing; shown at the bottom of Profile */
+  var APP_VERSION = "2026.10.21-1"; /* bump when publishing; shown at the bottom of Profile */
   var FB_VER = "10.12.2";
   var EMO = {
     alcohol: "🍺", cigarettes: "🚬", weed: "🌿", drugs: "💉", pills: "💊", junkfood: "🍔", sweets: "🍬",
@@ -327,6 +385,7 @@
     { id: "3d", emo: "🔥", ms: 3 * 864e5 }, { id: "1w", emo: "⭐", ms: 7 * 864e5 }, { id: "2w", emo: "🌟", ms: 14 * 864e5 },
     { id: "1m", emo: "🏅", ms: 30 * 864e5 }, { id: "3m", emo: "🏆", ms: 90 * 864e5 }, { id: "1y", emo: "👑", ms: 365 * 864e5 }
   ];
+  var MOODS = ["😞", "😕", "😐", "🙂", "😄"];
   var FAV_CHOICES = ["24h", "morning", "sayno", "1w", "1m", "3m", "1y"];
   var CURRENCIES = ["₪", "$", "€", "£"];
 
@@ -339,7 +398,7 @@
       goals: [], goalOther: "", improve: "", critical: 7, belief: null,
       share: null, shareName: "", milestone: null, milestoneOther: "",
       why: "", reminderTimes: ["20:00"],
-      checkins: {}, lastPrompt: null,
+      checkins: {}, journal: {}, lastPrompt: null,
       shareId: null, notify: false, fcmToken: null
     };
   }
@@ -355,7 +414,7 @@
   }
   function newHabit(key) {
     return { key: key, other: "", startDate: todayStr(), startTime: nowTimeStr(), amount: "", amount2: "", freqChoice: "", cost: "",
-      streakStart: null, bestMs: 0, restarts: 0, saidNo: null };
+      streakStart: null, bestMs: 0, restarts: 0, saidNo: null, firstStart: null, slips: [] };
   }
   /* Older versions kept a single habit at the top level: move it into S.habits. */
   function migrate(s) {
@@ -376,6 +435,8 @@
       }
     });
     if (!Array.isArray(s.reminderTimes)) s.reminderTimes = [s.reminderTime || "20:00"];
+    if (!s.journal) s.journal = {};
+    (s.habits || []).forEach(function (h) { if (!h.firstStart) h.firstStart = h.streakStart; if (!Array.isArray(h.slips)) h.slips = []; });
     delete s.reminderTime;
   }
   function save() {
@@ -821,7 +882,7 @@
     var err = STEPS[step].validate();
     if (err) { $("stepError").textContent = err; return; }
     if (step < STEPS.length - 1) { step++; whyWarned = false; save(); renderStep(); window.scrollTo(0, 0); return; }
-    S.setupDone = true; S.habits.forEach(function (h) { h.streakStart = startTs(h); });
+    S.setupDone = true; S.habits.forEach(function (h) { h.streakStart = h.firstStart = startTs(h); h.slips = []; });
     if (reminderTsFor(new Date()) <= Date.now()) S.lastPrompt = todayStr();
     save(); route(); confetti(); toast(t("toastStart"));
     setTimeout(function () { offerReminders(); }, 1200);
@@ -851,7 +912,8 @@
 
   function showTab(id) {
     currentTab = id;
-    document.querySelectorAll(".page").forEach(function (p) { p.classList.toggle("hidden", p.id !== id); });
+    document.querySelectorAll(".page").forEach(function (p) { p.classList.toggle("hidden", p.id !== id); p.classList.remove("enter"); });
+    var pg = $(id); void pg.offsetWidth; pg.classList.add("enter");
     document.querySelectorAll(".tab").forEach(function (b) {
       var on = b.dataset.tab === id; b.classList.toggle("active", on);
       if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
@@ -884,6 +946,7 @@
           "<div><b id='tM" + i + "'>0</b><span>" + t("min") + "</span></div><div><b id='tS" + i + "'>0</b><span>" + t("sec") + "</span></div></div>" +
           "<div class='fav-line' id='fav" + i + "'></div>" +
           "<div class='stats' id='stats" + i + "'></div>" +
+          chartHtml(h, i) +
           "<div class='ms-strip' id='ms" + i + "'></div>" +
           "<div class='actions' style='margin-top:12px'><button data-sayno='" + i + "'></button><button class='danger' data-slip='" + i + "'>" + t("slipBtn") + "</button></div></div>";
       }).join("") + "</div>" +
@@ -895,17 +958,81 @@
       "<div class='card'><h3>" + t("daysTitle") + "</h3><div class='days' id='days'></div><p class='small muted' style='margin:10px 0'>" + t("daysLegend") + "</p>" +
         "<div class='stats' style='grid-template-columns:1fr'>" + stat(checkinsYes(), t("cleanCheckins")) + "</div></div>";
     $("checkinNowBtn").addEventListener("click", openCheckin);
+    $("checkinNowBtn").classList.toggle("pulse", !S.checkins[todayStr()]);
     $("openCheckinBtn").addEventListener("click", openCheckin);
     p.querySelectorAll("[data-slip]").forEach(function (b) { b.addEventListener("click", function () { askSlip(+b.dataset.slip); }); });
     p.querySelectorAll("[data-sayno]").forEach(function (b) {
       b.addEventListener("click", function () { S.habits[+b.dataset.sayno].saidNo = todayStr(); save(); renderBadges(); confetti(); toast(t("saidNoToast")); });
     });
     bindSlider();
+    bindCharts();
     if ($("shareBtn")) $("shareBtn").addEventListener("click", shareProgress);
     tick(); renderStats(); renderBadges(); renderDays();
     if (S.lastPrompt === todayStr() && !S.checkins[todayStr()]) $("checkinBanner").classList.remove("hidden");
     checkReminder();
   }
+  /* ---------- streak chart: the streak's length at the end of each of the last 30 days ---------- */
+  function streakSeries(h) {
+    var starts = [h.firstStart || h.streakStart].concat((h.slips || []).slice().sort()), now = Date.now(), pts = [];
+    var d0 = new Date(); d0.setHours(0, 0, 0, 0);
+    for (var i = 29; i >= 0; i--) {
+      var day = new Date(d0); day.setDate(day.getDate() - i);
+      var from = day.getTime(), to = i === 0 ? now : from + 864e5 - 1, st = null;
+      starts.forEach(function (x) { if (x && x <= to) st = x; });
+      pts.push({ day: day, v: st === null ? null : (to - st) / 864e5,
+        slip: (h.slips || []).some(function (x) { return x >= from && x <= to; }) });
+    }
+    return pts;
+  }
+  var CH = { W: 300, H: 100, L: 26, R: 10, T: 10, B: 20 };
+  function chartHtml(h, i) {
+    if (!h.streakStart || Date.now() < h.streakStart) return "";
+    var pts = streakSeries(h), max = 1;
+    pts.forEach(function (p) { if (p.v !== null) max = Math.max(max, p.v); });
+    max = Math.ceil(max);
+    var x = function (k) { return CH.L + k * (CH.W - CH.L - CH.R) / 29; };
+    var y = function (v) { return CH.T + (1 - v / max) * (CH.H - CH.T - CH.B); };
+    var line = "", area = "", open = false, first = null, last = null;
+    pts.forEach(function (p, k) {
+      if (p.v === null) { if (open) area += "L" + x(last) + "," + y(0) + "Z"; open = false; return; }
+      if (!open) { line += "M" + x(k) + "," + y(p.v); area += "M" + x(k) + "," + y(0) + "L" + x(k) + "," + y(p.v); open = true; if (first === null) first = k; }
+      else { line += "L" + x(k) + "," + y(p.v); area += "L" + x(k) + "," + y(p.v); }
+      last = k;
+    });
+    if (open) area += "L" + x(last) + "," + y(0) + "Z";
+    var slips = pts.filter(function (p) { return p.slip; }).length, now = pts[29].v || 0;
+    var dl = function (d) { return d.toLocaleDateString(L().locale, { day: "numeric", month: "short" }); };
+    return "<div class='chart' data-chart='" + i + "'><div class='chart-head'><span>" + t("chartTitle") + "</span><span class='chart-tip' id='tip" + i + "'></span></div>" +
+      "<svg viewBox='0 0 " + CH.W + " " + CH.H + "' role='img' aria-label='" + esc(t("chartAria", { d: fmtNum(now), n: slips })) + "'>" +
+      "<line class='grid' x1='" + CH.L + "' x2='" + (CH.W - CH.R) + "' y1='" + y(max) + "' y2='" + y(max) + "'/>" +
+      "<line class='base' x1='" + CH.L + "' x2='" + (CH.W - CH.R) + "' y1='" + y(0) + "' y2='" + y(0) + "'/>" +
+      "<text class='ax' x='" + (CH.L - 5) + "' y='" + (y(max) + 3) + "' text-anchor='end'>" + max + "</text>" +
+      "<text class='ax' x='" + (CH.L - 5) + "' y='" + (y(0) + 3) + "' text-anchor='end'>0</text>" +
+      "<text class='ax' x='" + CH.L + "' y='" + (CH.H - 4) + "'>" + esc(dl(pts[0].day)) + "</text>" +
+      "<text class='ax' x='" + (CH.W - CH.R) + "' y='" + (CH.H - 4) + "' text-anchor='end'>" + t("today") + "</text>" +
+      "<path class='area' d='" + area + "'/><path class='line' d='" + line + "'/>" +
+      pts.map(function (p, k) { return p.slip && p.v !== null ? "<circle class='slipdot' r='4.5' cx='" + x(k) + "' cy='" + y(p.v) + "'/>" : ""; }).join("") +
+      (last !== null ? "<circle class='enddot' r='4.5' cx='" + x(last) + "' cy='" + y(pts[last].v) + "'/>" : "") +
+      "<line class='cross' id='cx" + i + "' y1='" + CH.T + "' y2='" + y(0) + "' x1='0' x2='0' visibility='hidden'/>" +
+      "<rect class='hit' x='" + CH.L + "' y='0' width='" + (CH.W - CH.L - CH.R) + "' height='" + CH.H + "'/></svg></div>";
+  }
+  function bindCharts() {
+    document.querySelectorAll("[data-chart]").forEach(function (box) {
+      var i = +box.dataset.chart, h = S.habits[i], pts = streakSeries(h), svg = box.querySelector("svg");
+      function show(ev) {
+        var r = svg.getBoundingClientRect(), fx = (ev.clientX - r.left) / r.width * CH.W;
+        var k = Math.max(0, Math.min(29, Math.round((fx - CH.L) / ((CH.W - CH.L - CH.R) / 29)))), p = pts[k];
+        var cx = $("cx" + i); cx.setAttribute("x1", CH.L + k * (CH.W - CH.L - CH.R) / 29); cx.setAttribute("x2", cx.getAttribute("x1")); cx.setAttribute("visibility", "visible");
+        $("tip" + i).textContent = p.day.toLocaleDateString(L().locale, { day: "numeric", month: "short" }) + ": " +
+          (p.v === null ? t("chartNoData") : t("chartDays", { d: fmtNum(p.v) })) + (p.slip ? " · " + t("chartSlip") : "");
+      }
+      function hide() { $("cx" + i).setAttribute("visibility", "hidden"); $("tip" + i).textContent = ""; }
+      svg.addEventListener("pointermove", function (e) { if (e.pointerType === "mouse") show(e); });
+      svg.addEventListener("pointerdown", show);
+      svg.addEventListener("pointerleave", function (e) { if (e.pointerType === "mouse") hide(); });
+    });
+  }
+
   /* swipe between habits; works the same left-to-right and right-to-left */
   function goToSlide(i, smooth) {
     var sl = $("slider"), el = sl && sl.querySelector("[data-slide='" + i + "']");
@@ -1017,7 +1144,8 @@
       var d = new Date(); d.setDate(d.getDate() - i);
       var k = dateKey(d), v = S.checkins[k];
       html += "<div class='day" + (v === "yes" ? " yes" : v === "no" ? " no" : "") + (k === today ? " today" : "") + "' title='" + k + "'>" +
-        d.toLocaleDateString(L().locale, { weekday: "narrow" }) + "<b>" + (v === "yes" ? "✓" : v === "no" ? "✗" : "·") + "</b>" + d.getDate() + "</div>";
+        d.toLocaleDateString(L().locale, { weekday: "narrow" }) + "<b>" + (v === "yes" ? "✓" : v === "no" ? "✗" : "·") + "</b>" + d.getDate() +
+        "<small>" + (S.journal[k] && S.journal[k].mood ? MOODS[S.journal[k].mood - 1] : "") + "</small></div>";
     }
     $("days").innerHTML = html;
   }
@@ -1037,6 +1165,7 @@
       var h = S.habits[i], ms = Math.max(0, now - (h.streakStart || now));
       held = Math.max(held, ms);
       h.bestMs = Math.max(h.bestMs, ms); h.restarts++; h.streakStart = now;
+      h.slips = (h.slips || []).concat(now).slice(-365);
     });
     save(); if (currentTab === "pHome") renderHome();
     var proof = held >= 36e5 ? t("relProof", { held: heldText(held) }) : t("relNew");
@@ -1048,9 +1177,23 @@
   function openCheckin() {
     openModal("<div class='big'>📝</div><h2>" + t("ciTitle") + "</h2>" +
       "<p class='c'><b>" + esc(t("ciQ", { habit: habitNames() })) + "</b></p>" +
-      "<div class='actions'><button class='danger' id='ciNo'>" + t("ciNo") + "</button><button class='primary' id='ciYes'>" + t("ciYes") + "</button></div>" +
+      "<p class='c small muted' style='margin:12px 0 0'>" + t("moodQ") + "</p><div class='moods' role='group' aria-label='" + esc(t("moodQ")) + "'>" +
+        MOODS.map(function (m, i) { return "<button data-mood='" + (i + 1) + "' aria-pressed='false' aria-label='" + esc(L().moods[i]) + "' title='" + esc(L().moods[i]) + "'>" + m + "</button>"; }).join("") + "</div>" +
+      "<label class='field' for='ciNote'>" + t("noteLabel") + " <span class='muted'>" + t("optional") + "</span></label>" +
+      "<input type='text' id='ciNote' maxlength='140' placeholder='" + esc(t("notePh")) + "'>" +
+      "<div class='actions' style='margin-top:14px'><button class='danger' id='ciNo'>" + t("ciNo") + "</button><button class='primary' id='ciYes'>" + t("ciYes") + "</button></div>" +
       "<div class='actions'><button class='ghost' id='ciLater'>" + t("ciLater") + "</button></div>");
+    var mood = 0, old = S.journal[todayStr()];
+    if (old) { mood = old.mood || 0; $("ciNote").value = old.note || ""; }
+    function drawMood() { $("modal").querySelectorAll("[data-mood]").forEach(function (b) { var on = +b.dataset.mood === mood; b.classList.toggle("selected", on); b.setAttribute("aria-pressed", String(on)); }); }
+    drawMood();
+    $("modal").querySelectorAll("[data-mood]").forEach(function (b) { b.addEventListener("click", function () { mood = +b.dataset.mood === mood ? 0 : +b.dataset.mood; drawMood(); }); });
+    function keepJournal() {
+      var note = $("ciNote").value.trim();
+      if (mood || note) S.journal[todayStr()] = { mood: mood, note: note }; else delete S.journal[todayStr()];
+    }
     $("ciYes").addEventListener("click", function () {
+      keepJournal();
       S.checkins[todayStr()] = "yes"; S.lastPrompt = todayStr(); save();
       if (currentTab === "pHome") renderHome();
       confetti();
@@ -1061,6 +1204,7 @@
       $("okBtn").addEventListener("click", closeModal);
     });
     $("ciNo").addEventListener("click", function () {
+      keepJournal(); save();
       if (S.habits.length === 1) { S.checkins[todayStr()] = "no"; S.lastPrompt = todayStr(); relapse([0]); }
       else askWhichSlipped();
     });
@@ -1127,6 +1271,12 @@
         "<div><span>" + t("whyCrit") + "</span><p>" + S.critical + " / 10 — " + esc(critText(S.critical)) + "</p></div>" +
         (S.about.trim() ? "<div><span>" + t("whyAbout") + "</span><p>" + esc(S.about) + "</p></div>" : "") +
       "</div></div>";
+    var days = Object.keys(S.journal || {}).sort().reverse().slice(0, 30);
+    html += "<div class='card'><h3>" + t("journalTitle") + "</h3>" + (days.length ? "<div class='journal'>" + days.map(function (k) {
+      var j = S.journal[k], dt = new Date(k + "T12:00").toLocaleDateString(L().locale, { weekday: "short", day: "numeric", month: "short" });
+      var res = S.checkins[k] === "yes" ? " · ✓" : S.checkins[k] === "no" ? " · ✗" : "";
+      return "<div class='jrow'><span class='jm'>" + (j.mood ? MOODS[j.mood - 1] : "📝") + "</span><div><small>" + esc(dt + res) + "</small>" + (j.note ? "<p>" + esc(j.note) + "</p>" : "") + "</div></div>";
+    }).join("") + "</div>" : "<p class='small muted' style='margin:0'>" + t("journalEmpty") + "</p>") + "</div>";
     if (editing) {
       html += "<div class='card'><p class='note' style='margin-top:0'>💡 " + esc(whyHint()) + "</p>" +
         "<label class='field' for='whyEdit'>" + t("mySentence") + "</label><textarea id='whyEdit' maxlength='280'>" + esc(S.why) + "</textarea>" +
@@ -1325,7 +1475,7 @@
       if (!err && m.money && (draft.amount2 === "" || isNaN(+draft.amount2) || +draft.amount2 < 0)) err = t("errBets");
       if (err) { $("ahErr").textContent = err; return; }
       if (!draft.startTime) draft.startTime = "00:00";
-      draft.streakStart = startTs(draft);
+      draft.streakStart = draft.firstStart = startTs(draft); draft.slips = [];
       S.habits.push(draft); save(); closeModal(); renderProfile();
       toast(t("habitAdded", { habit: habitLabel(draft) }));
     });

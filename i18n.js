@@ -152,6 +152,9 @@ window.BF_I18N = {
       cancel: "Cancel", yesReset: "Yes, reset", resetDone: "Everything was reset.",
 
       ciTitle: "Daily check-in",
+      moodQ: "How do you feel today?", noteLabel: "A line about your day", notePh: "e.g. Hard morning, but a walk helped",
+      chartTitle: "Streak over the last 30 days", chartAria: "Current streak {d} days, {n} slips in the last 30 days", chartDays: "{d} days", chartNoData: "not started", chartSlip: "slip", today: "Today",
+      journalTitle: "My journal", journalEmpty: "Your daily mood and notes will appear here after your check-ins.",
       ciQ: "Did you get through today without giving in to {habit}?",
       ciNo: "No, I slipped", ciYes: "Yes, I did it!", ciLater: "Ask me later",
       ciBanner: "📝 Time for today's check-in.", ciNow: "Check in",
@@ -183,6 +186,7 @@ window.BF_I18N = {
       and: " and "
     },
     per: { day: "a day", week: "a week" },
+    moods: ["Very bad", "Not great", "Okay", "Good", "Great"],
     freq: ["Once a week or less", "A few times a week", "Once a day", "A couple of times a day", "Many times a day"],
     habits: {
       alcohol:    { label: "Alcohol", q: "How many drinks do you have a week?", unit: "drinks", avoided: "drinks skipped" },
@@ -392,6 +396,9 @@ window.BF_I18N = {
       cancel: "ביטול", yesReset: "כן, לאפס", resetDone: "הכול אופס.",
 
       ciTitle: "איך עבר היום?",
+      moodQ: "איך [[אתה מרגיש|את מרגישה]] היום?", noteLabel: "שורה על היום שלך", notePh: "למשל: בוקר קשה, אבל הליכה עזרה",
+      chartTitle: "הרצף ב־30 הימים האחרונים", chartAria: "רצף נוכחי {d} ימים, {n} מעידות ב־30 הימים האחרונים", chartDays: "{d} ימים", chartNoData: "עוד לא התחיל", chartSlip: "מעידה", today: "היום",
+      journalTitle: "היומן שלי", journalEmpty: "מצב הרוח וההערות היומיות שלך יופיעו כאן אחרי שתסמן[[|י]] את היום.",
       ciQ: "[[עברת|עברת]] את היום בלי להיכנע ל{habit}?",
       ciNo: "לא, מעדתי", ciYes: "כן, הצלחתי!", ciLater: "[[תשאל|תשאלי]] אותי אחר כך",
       ciBanner: "📝 הגיע הזמן לסכם את היום.", ciNow: "לסיכום היום",
@@ -423,6 +430,7 @@ window.BF_I18N = {
       and: " ו"
     },
     per: { day: "ביום", week: "בשבוע" },
+    moods: ["רע מאוד", "לא משהו", "בסדר", "טוב", "מעולה"],
     freq: ["פעם בשבוע או פחות", "כמה פעמים בשבוע", "פעם ביום", "כמה פעמים ביום", "הרבה פעמים ביום"],
     habits: {
       alcohol:    { label: "אלכוהול", q: "כמה משקאות [[אתה שותה|את שותה]] בשבוע?", unit: "משקאות", avoided: "משקאות שלא נשתו" },

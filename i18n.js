@@ -133,6 +133,8 @@ window.BF_I18N = {
 
       profPageTitle: "Profile & settings", save: "Save", saved: "Saved ✓",
       language: "Language", currency: "Currency",
+      editPrice: "Edit price", editPriceTitle: "{habit}: how much it costs", pricePerWeek: "{p} a week", noPrice: "no price set",
+      priceNote: "Money saved is recalculated with the new price.", priceSaved: "Price updated ✓",
       myHabits: "My habits", addHabit: "Add a habit", addHabitBtn: "Add", remove: "Remove", sinceDate: "since {date}",
       habitAdded: "{habit} added — its timer is running.", habitRemoved: "Habit removed.",
       removeHabitTitle: "Remove {habit}?", removeHabitText: "Its timer, streak and milestones will be deleted. Your other habits aren't affected.",
@@ -377,6 +379,8 @@ window.BF_I18N = {
 
       profPageTitle: "פרופיל והגדרות", save: "שמירה", saved: "נשמר ✓",
       language: "שפה", currency: "מטבע",
+      editPrice: "עריכת מחיר", editPriceTitle: "{habit}: כמה זה עולה", pricePerWeek: "{p} בשבוע", noPrice: "לא הוגדר מחיר",
+      priceNote: "הכסף שנחסך יחושב מחדש לפי המחיר החדש.", priceSaved: "המחיר עודכן ✓",
       myHabits: "ההרגלים שלי", addHabit: "הוספת הרגל", addHabitBtn: "הוספה", remove: "הסרה", sinceDate: "מאז {date}",
       habitAdded: "ההרגל „{habit}“ נוסף, והטיימר שלו כבר רץ.", habitRemoved: "ההרגל הוסר.",
       removeHabitTitle: "להסיר את „{habit}“?", removeHabitText: "הטיימר, הרצף והמטרות של ההרגל הזה יימחקו. שאר ההרגלים לא מושפעים.",

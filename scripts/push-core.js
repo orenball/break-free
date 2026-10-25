@@ -207,14 +207,14 @@ export function ideaMessage(token, ideas) {
 }
 async function notifyOwnerOfIdeas({ db, messaging, users, ownerDevice, log }) {
   const code = (ownerDevice || "").trim();
-  if (code.length < 6) return;
+  if (code.length < 6) { log("ideas: OWNER_DEVICE not set — skipping idea alerts"); return; }
   const owner = users.find((u) => u.id.endsWith(code));
   if (!owner || !owner.fcmToken) { log(`ideas: owner device ${code} not found or has no notification sign-up`); return; }
   const metaRef = db.collection("stats").doc("meta");
   const meta = (await metaRef.get()).data() || {};
   const since = typeof meta.lastIdeaAt === "number" ? meta.lastIdeaAt : 0;
   const snap = await db.collection("feedback").where("createdAt", ">", since).orderBy("createdAt", "desc").limit(20).get();
-  if (snap.empty) return;
+  if (snap.empty) { log(`ideas: none new since ${since}`); return; }
   const ideas = snap.docs.map((d) => d.data());
   try {
     await messaging.send(ideaMessage(owner.fcmToken, ideas));

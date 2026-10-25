@@ -150,6 +150,7 @@
   .ms-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 12px; }
   .ms-strip .m { font-size: 20px; filter: grayscale(1); opacity: 0.35; }
   .ms-strip .m.done { filter: none; opacity: 1; }
+  .ms-strip .m.fav { border-bottom: 2px solid var(--gold); padding-bottom: 1px; }
   .ms-strip small { color: var(--muted); margin-inline-start: auto; }
   .chart { margin-top: 12px; direction: ltr; }
   .chart-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 4px; min-height: 18px; }
@@ -165,6 +166,14 @@
   .chart .slipdot { fill: var(--warn); stroke: var(--panel); stroke-width: 2; }
   .chart .cross { stroke: var(--muted); stroke-width: 1; }
   .chart .hit { fill: transparent; cursor: crosshair; }
+  .slip-wrap { text-align: center; margin-top: 8px; }
+  .slip-link { background: none !important; border: none !important; min-height: 36px; padding: 6px 12px; font-size: 13px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+  .slip-link:hover { color: var(--warn); }
+  #checkinNowBtn.done { background: var(--accent-soft) !important; color: var(--accent) !important; border: 2px solid var(--accent) !important; box-shadow: none; font-weight: 700; }
+  .tip-day { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--gold-soft); }
+  .tip-day p { margin: 4px 0 0; }
+  .tips { margin: 0 0 14px; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 8px; }
+  button.day { display: block; width: 100%; min-height: 0; padding: 6px 2px; border: none; font-size: 12px; color: var(--text); }
   .moods { display: flex; justify-content: center; gap: 6px; margin: 6px 0 2px; }
   .moods button { font-size: 26px; min-height: 48px; padding: 6px 8px; background: transparent; border-color: transparent; }
   .moods button.selected { transform: scale(1.15); }
@@ -355,16 +364,16 @@
 <div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="i18n.js?v=2026.10.21-2"></script>
-<script src="articles.js?v=2026.10.21-2" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
-<script src="firebase-config.js?v=2026.10.21-2"></script>
+<script src="i18n.js?v=2026.10.25-1"></script>
+<script src="articles.js?v=2026.10.25-1" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
+<script src="firebase-config.js?v=2026.10.25-1"></script>
 <script>
 (function () {
   "use strict";
 
   /* ================= constants ================= */
   var KEY = "breakFree.app.v1";
-  var APP_VERSION = "2026.10.21-2"; /* bump when publishing; shown at the bottom of Profile */
+  var APP_VERSION = "2026.10.25-1"; /* bump when publishing; shown at the bottom of Profile */
   var FB_VER = "10.12.2";
   var EMO = {
     alcohol: "🍺", cigarettes: "🚬", weed: "🌿", drugs: "💉", pills: "💊", junkfood: "🍔", sweets: "🍬",
@@ -401,7 +410,7 @@
       name: "", age: "", about: "",
       habits: [], currency: "₪",
       goals: [], goalOther: "", improve: "", critical: 7, belief: null,
-      share: null, shareName: "", milestone: null, milestoneOther: "",
+      share: null, shareName: "", milestones: [], milestoneOther: "",
       why: "", reminderTimes: ["20:00"],
       checkins: {}, journal: {}, lastPrompt: null,
       shareId: null, notify: false, fcmToken: null
@@ -441,6 +450,8 @@
     });
     if (!Array.isArray(s.reminderTimes)) s.reminderTimes = [s.reminderTime || "20:00"];
     if (!s.journal) s.journal = {};
+    if (!Array.isArray(s.milestones)) s.milestones = s.milestone ? [s.milestone] : [];
+    delete s.milestone;
     (s.habits || []).forEach(function (h) { if (!h.firstStart) h.firstStart = h.streakStart; if (!Array.isArray(h.slips)) h.slips = []; });
     delete s.reminderTime;
   }
@@ -500,6 +511,11 @@
     if (id === "custom") return S.milestoneOther;
     return L().milestones[id] || "";
   }
+  /* the milestones the person is looking forward to, in time order, custom last */
+  function chosenMilestones() {
+    return FAV_CHOICES.filter(function (id) { return S.milestones.indexOf(id) >= 0; }).concat(S.milestones.indexOf("custom") >= 0 ? ["custom"] : []);
+  }
+  function milestoneLabels() { return joinNice(chosenMilestones().map(milestoneLabel)); }
   function streakMsOf(h) { return h.streakStart ? Date.now() - h.streakStart : 0; }
   function longestStreak() { return S.habits.reduce(function (m, h) { return Math.max(m, streakMsOf(h)); }, 0); }
   function fmtNum(n) { return n >= 100 ? Math.round(n).toLocaleString(L().locale) : (Math.round(n * 10) / 10).toLocaleString(L().locale); }
@@ -709,13 +725,6 @@
       },
       validate: function () { if (!S.goals.length && !S.goalOther.trim()) return t("errGoal"); }
     },
-    { // improve
-      render: function () {
-        return "<h2>" + t("improveTitle") + "</h2><p class='sub'>" + esc(t("improveSub")) + "</p><textarea id='improve' maxlength='300' placeholder='" + esc(t("improvePh")) + "'>" + esc(S.improve) + "</textarea>";
-      },
-      bind: function () { $("improve").addEventListener("input", function () { S.improve = this.value; }); },
-      validate: function () { if (!S.improve.trim()) return t("errImprove"); }
-    },
     { // critical
       render: function () {
         return "<h2>" + t("critTitle") + "</h2><p class='sub'>" + t("critSub") + "</p><div class='range-val' id='critVal'>" + S.critical + "</div>" +
@@ -763,19 +772,27 @@
         var html = "<h2>" + t("msTitle") + "</h2><p class='sub'>" + t("msSub") + "</p><div class='opts'>";
         FAV_CHOICES.forEach(function (id) {
           var m = MILESTONES.filter(function (x) { return x.id === id; })[0];
-          html += "<button class='opt" + (S.milestone === id ? " selected" : "") + "' data-ms='" + id + "'>" + m.emo + " " + esc(L().milestones[id]) + "</button>";
+          var on = S.milestones.indexOf(id) >= 0;
+          html += "<button class='opt" + (on ? " selected" : "") + "' data-ms='" + id + "' aria-pressed='" + on + "'>" + m.emo + " " + esc(L().milestones[id]) + "</button>";
         });
-        html += "<button class='opt" + (S.milestone === "custom" ? " selected" : "") + "' data-ms='custom'>" + t("msCustom") + "</button></div>";
-        if (S.milestone === "custom") html += "<label class='field' for='msOther'>" + t("msOther") + "</label><input type='text' id='msOther' maxlength='60' placeholder='" + esc(t("msOtherPh")) + "' value='" + esc(S.milestoneOther) + "'>";
+        var cu = S.milestones.indexOf("custom") >= 0;
+        html += "<button class='opt" + (cu ? " selected" : "") + "' data-ms='custom' aria-pressed='" + cu + "'>" + t("msCustom") + "</button></div>";
+        if (cu) html += "<label class='field' for='msOther'>" + t("msOther") + "</label><input type='text' id='msOther' maxlength='60' placeholder='" + esc(t("msOtherPh")) + "' value='" + esc(S.milestoneOther) + "'>";
         return html;
       },
       bind: function () {
-        document.querySelectorAll("[data-ms]").forEach(function (b) { b.addEventListener("click", function () { S.milestone = b.dataset.ms; renderStep(); }); });
+        document.querySelectorAll("[data-ms]").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var k = S.milestones.indexOf(b.dataset.ms);
+            if (k >= 0) S.milestones.splice(k, 1); else S.milestones.push(b.dataset.ms);
+            renderStep();
+          });
+        });
         var o = $("msOther"); if (o) o.addEventListener("input", function () { S.milestoneOther = o.value; });
       },
       validate: function () {
-        if (!S.milestone) return t("errMs");
-        if (S.milestone === "custom" && !S.milestoneOther.trim()) return t("errMsOther");
+        if (!S.milestones.length) return t("errMs");
+        if (S.milestones.indexOf("custom") >= 0 && !S.milestoneOther.trim()) return t("errMsOther");
       }
     },
     { // why
@@ -803,10 +820,10 @@
           [t("sQuit"), S.habits.map(function (h) { return EMO[h.key] + " " + habitLabel(h); }).join(" · ")],
           [t("sStart"), S.habits.map(function (h) { return (S.habits.length > 1 ? habitLabel(h) + ": " : "") + new Date(startTs(h)).toLocaleString(L().locale, { dateStyle: "medium", timeStyle: "short" }); }).join(" · ")],
           [t("sNow"), S.habits.map(function (h) { return (S.habits.length > 1 ? habitLabel(h) + ": " : "") + usageText(h); }).join(" · ")],
-          [t("sAim"), joinNice(goalLabels())], [t("sImprove"), S.improve],
+          [t("sAim"), joinNice(goalLabels())]].concat(S.improve.trim() ? [[t("sImprove"), S.improve]] : []).concat([
           [t("sCrit"), S.critical + " / 10"], [t("sBelief"), L().belief[S.belief].label], [t("sShare"), share],
-          [t("sMs"), milestoneLabel(S.milestone)], [t("sWhy"), S.why], [t("sRem"), cleanTimes(S.reminderTimes).join(" · ")]
-        ];
+          [t("sMs"), milestoneLabels()], [t("sWhy"), S.why], [t("sRem"), cleanTimes(S.reminderTimes).join(" · ")]
+        ]);
         return "<h2>" + t("sumTitle") + "</h2><p class='sub'>" + t("sumSub") + "</p><dl class='summary'>" +
           rows.map(function (r) { return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("") + "</dl>";
       },
@@ -953,19 +970,26 @@
           "<div class='stats' id='stats" + i + "'></div>" +
           chartHtml(h, i) +
           "<div class='ms-strip' id='ms" + i + "'></div>" +
-          "<div class='actions' style='margin-top:12px'><button data-sayno='" + i + "'></button><button class='danger' data-slip='" + i + "'>" + t("slipBtn") + "</button></div></div>";
+          "<div class='actions' style='margin-top:12px'><button data-tips='" + i + "'>" + t("tipsBtn") + "</button><button data-sayno='" + i + "'></button></div>" +
+          "<div class='slip-wrap'><button class='slip-link' data-slip='" + i + "'>" + t("slipBtn") + "</button></div></div>";
       }).join("") + "</div>" +
       (multi ? "<div class='dots' role='tablist'>" + S.habits.map(function (h, i) {
         return "<button class='dot" + (i === msIdx ? " on" : "") + "' data-dot='" + i + "' aria-label='" + esc(habitLabel(h)) + "'></button>"; }).join("") + "</div>" +
         "<div class='swipe-hint'>" + t("swipeHint") + "</div>" : "<div class='single-gap'></div>") +
-      "<div class='card'><h3>" + t("quoteTitle") + "</h3><div class='quote'>“" + esc(todaysQuote()) + "”</div></div>" +
+      "<div class='card'><h3>" + t("quoteTitle") + "</h3><div class='quote'>“" + esc(todaysQuote()) + "”</div>" +
+        "<div class='tip-day'><b>💡 " + t("tipOfDay") + "</b><p>" + esc(todaysTip()) + "</p></div></div>" +
       (S.share !== "self" ? "<div class='card'><h3>" + t("shareCardTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("shareCardSub") + "</p><div class='actions'><button class='primary' id='shareBtn'>" + t("shareBtn") + "</button></div></div>" : "") +
       "<div class='card'><h3>" + t("daysTitle") + "</h3><div class='days' id='days'></div><p class='small muted' style='margin:10px 0'>" + t("daysLegend") + "</p>" +
         "<div class='stats' style='grid-template-columns:1fr'>" + stat(checkinsYes(), t("cleanCheckins")) + "</div></div>";
     $("checkinNowBtn").addEventListener("click", openCheckin);
-    $("checkinNowBtn").classList.toggle("pulse", !S.checkins[todayStr()]);
+    var ans = S.checkins[todayStr()];
+    $("checkinNowBtn").classList.toggle("pulse", !ans);
+    $("checkinNowBtn").classList.toggle("done", !!ans);
+    $("checkinNowBtn").classList.toggle("primary", !ans);
+    if (ans) $("checkinNowBtn").textContent = ans === "yes" ? t("checkinDone") : t("checkinDoneNo");
     $("openCheckinBtn").addEventListener("click", openCheckin);
     p.querySelectorAll("[data-slip]").forEach(function (b) { b.addEventListener("click", function () { askSlip(+b.dataset.slip); }); });
+    p.querySelectorAll("[data-tips]").forEach(function (b) { b.addEventListener("click", function () { openTips(+b.dataset.tips); }); });
     p.querySelectorAll("[data-sayno]").forEach(function (b) {
       b.addEventListener("click", function () { S.habits[+b.dataset.sayno].saidNo = todayStr(); save(); renderBadges(); confetti(); toast(t("saidNoToast")); });
     });
@@ -1062,6 +1086,21 @@
     }, { passive: true });
     document.querySelectorAll("[data-dot]").forEach(function (d) { d.addEventListener("click", function () { goToSlide(+d.dataset.dot, true); }); });
   }
+  function todaysTip() {
+    var n = Math.floor(Date.now() / 864e5), pool = [];
+    S.habits.forEach(function (h) { (L().tips[h.key] || L().tips.other).forEach(function (x) { pool.push(x); }); });
+    L().tips.urge.forEach(function (x) { pool.push(x); });
+    return pool[n % pool.length];
+  }
+  function openTips(i) {
+    var h = S.habits[i], list = L().tips[h.key] || L().tips.other;
+    openModal("<div class='big'>💡</div><h2>" + esc(t("tipsTitle", { habit: habitLabel(h) })) + "</h2>" +
+      "<ul class='tips'>" + list.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" +
+      "<h3>🌊 " + t("tipsUrge") + "</h3><ul class='tips'>" + L().tips.urge.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" +
+      "<div class='actions'><button id='tipsLearn'>" + t("tipsMore") + "</button><button class='primary' id='okBtn'>" + t("thanks") + "</button></div>");
+    $("okBtn").addEventListener("click", closeModal);
+    $("tipsLearn").addEventListener("click", function () { closeModal(); showTab("pLearn"); });
+  }
   function todaysQuote() {
     var d = new Date(), n = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5);
     var h = S.habits[n % S.habits.length] || { key: "other" };
@@ -1112,7 +1151,10 @@
     var d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, mi = Math.floor(ms / 6e4) % 60;
     return d > 0 ? t("cdD", { d: d, h: h }) : h > 0 ? t("cdH", { h: h, m: mi }) : t("cdM", { m: mi });
   }
-  function favMilestone() { return MILESTONES.filter(function (m) { return m.id === S.milestone; })[0]; }
+  function nextFav(h) {
+    var list = MILESTONES.filter(function (m) { return S.milestones.indexOf(m.id) >= 0; });
+    return { list: list, next: list.filter(function (m) { return !milestoneDone(m, h.streakStart, h.saidNo); })[0] || null };
+  }
   function favTarget(fav, h) { return fav.id === "morning" ? firstMorningTs(h.streakStart) : h.streakStart + fav.ms; }
   function renderBadges() {
     S.habits.forEach(function (h, i) {
@@ -1120,7 +1162,7 @@
       var done = MILESTONES.filter(function (m) { return milestoneDone(m, h.streakStart, h.saidNo); });
       strip.innerHTML = MILESTONES.map(function (m) {
         var on = done.indexOf(m) >= 0;
-        return "<span class='m" + (on ? " done" : "") + "' title='" + esc(L().milestones[m.id]) + "' aria-label='" + esc(L().milestones[m.id]) + (on ? " ✓" : "") + "'>" + m.emo + "</span>";
+        return "<span class='m" + (on ? " done" : "") + (S.milestones.indexOf(m.id) >= 0 ? " fav" : "") + "' title='" + esc(L().milestones[m.id]) + "' aria-label='" + esc(L().milestones[m.id]) + (on ? " ✓" : "") + "'>" + m.emo + "</span>";
       }).join("") + "<small>" + t("msCount", { n: done.length, total: MILESTONES.length }) + "</small>";
       var b = document.querySelector("[data-sayno='" + i + "']");
       if (b) {
@@ -1132,27 +1174,45 @@
   }
   /* one short line per habit card: how far to the milestone you're waiting for */
   function renderFavLines() {
-    var fav = favMilestone();
     S.habits.forEach(function (h, i) {
       var el = $("fav" + i); if (!el) return;
-      if (S.milestone === "custom") { el.textContent = "⭐ " + S.milestoneOther; return; }
-      if (!fav || !h.streakStart || Date.now() < h.streakStart) { el.textContent = ""; return; }
-      if (fav.id === "sayno") { el.textContent = "⭐ " + L().milestones.sayno + (h.saidNo ? " ✓" : ""); return; }
-      var label = L().milestones[fav.id];
-      el.textContent = milestoneDone(fav, h.streakStart, h.saidNo) ? "⭐ " + label + " ✓" : "⭐ " + label + " · " + t("msToGo", { t: countdownText(favTarget(fav, h) - Date.now()) });
+      if (!h.streakStart || Date.now() < h.streakStart) { el.textContent = ""; return; }
+      var f = nextFav(h);
+      if (!f.list.length) { el.textContent = S.milestones.indexOf("custom") >= 0 ? "⭐ " + S.milestoneOther : ""; return; }
+      if (!f.next) { el.textContent = "⭐ " + t("msAllReached"); return; }
+      var label = L().milestones[f.next.id];
+      el.textContent = f.next.id === "sayno" ? "⭐ " + label : "⭐ " + label + " · " + t("msToGo", { t: countdownText(favTarget(f.next, h) - Date.now()) });
     });
   }
   function renderDays() {
     if (!$("days")) return;
     var html = "", today = todayStr();
-    for (var i = 13; i >= 0; i--) {
+    for (var i = 29; i >= 0; i--) {
       var d = new Date(); d.setDate(d.getDate() - i);
       var k = dateKey(d), v = S.checkins[k];
-      html += "<div class='day" + (v === "yes" ? " yes" : v === "no" ? " no" : "") + (k === today ? " today" : "") + "' title='" + k + "'>" +
+      html += "<button class='day" + (v === "yes" ? " yes" : v === "no" ? " no" : "") + (k === today ? " today" : "") + "' data-day='" + k + "' aria-label='" +
+        esc(d.toLocaleDateString(L().locale, { weekday: "long", day: "numeric", month: "long" })) + "'>" +
         d.toLocaleDateString(L().locale, { weekday: "narrow" }) + "<b>" + (v === "yes" ? "✓" : v === "no" ? "✗" : "·") + "</b>" + d.getDate() +
-        "<small>" + (S.journal[k] && S.journal[k].mood ? MOODS[S.journal[k].mood - 1] : "") + "</small></div>";
+        "<small>" + (S.journal[k] && S.journal[k].mood ? MOODS[S.journal[k].mood - 1] : "") + "</small></button>";
     }
     $("days").innerHTML = html;
+    $("days").querySelectorAll("[data-day]").forEach(function (b) {
+      b.addEventListener("click", function () { if (b.dataset.day === todayStr()) openCheckin(); else openDay(b.dataset.day); });
+    });
+  }
+  /* mark a past day that was missed (only the calendar; timers are changed with "I slipped") */
+  function openDay(k) {
+    var label = new Date(k + "T12:00").toLocaleDateString(L().locale, { weekday: "long", day: "numeric", month: "long" });
+    openModal("<div class='big'>📅</div><h2>" + esc(t("dayTitle", { date: label })) + "</h2><p class='c'>" + t("dayQ") + "</p>" +
+      "<div class='opts'><button class='opt" + (S.checkins[k] === "yes" ? " selected" : "") + "' id='dYes'>" + t("dayYes") + "</button>" +
+      "<button class='opt" + (S.checkins[k] === "no" ? " selected" : "") + "' id='dNo'>" + t("dayNo") + "</button></div>" +
+      "<p class='small muted'>" + t("dayNoNote") + "</p>" +
+      "<div class='actions'>" + (S.checkins[k] ? "<button class='ghost' id='dClear'>" + t("dayClear") + "</button>" : "") + "<button id='dCancel'>" + t("cancel") + "</button></div>");
+    function setDay(v) { if (v) S.checkins[k] = v; else delete S.checkins[k]; save(); closeModal(); if (currentTab === "pHome") renderHome(); toast(t("saved")); }
+    $("dYes").addEventListener("click", function () { setDay("yes"); });
+    $("dNo").addEventListener("click", function () { setDay("no"); });
+    if ($("dClear")) $("dClear").addEventListener("click", function () { setDay(null); });
+    $("dCancel").addEventListener("click", closeModal);
   }
 
   /* ================= slip + check-in ================= */
@@ -1260,7 +1320,7 @@
     lines.push(t("wlCrit", { crit: S.critical }));
     if (goals.length) lines.push(t("wlGoals", { goals: joinNice(goals) }));
     if (S.improve.trim()) lines.push(t("wlImprove", { improve: S.improve.trim() }));
-    if (S.milestone) lines.push(t("wlMs", { ms: milestoneLabel(S.milestone) }));
+    if (S.milestones.length) lines.push(t("wlMs", { ms: milestoneLabels() }));
     if (d >= 1) lines.push(t("wlDays", { d: d }));
     if (S.belief) lines.push(t("wlBelief", { belief: L().belief[S.belief].label.replace(/\s*💪/, "") }));
     return lines;
@@ -1271,8 +1331,8 @@
       "<div class='card why-line'><span class='eyebrow'>" + t("whyToday") + "</span>" + esc(lines[n % lines.length]) + "</div>" +
       "<div class='card'><div class='kv'>" +
         "<div><span>" + t("whyGoals") + "</span><p>" + esc(joinNice(goalLabels())) + "</p></div>" +
-        "<div><span>" + t("whyImprove") + "</span><p>" + esc(S.improve) + "</p></div>" +
-        "<div><span>" + t("whyMs") + "</span><p>" + esc(milestoneLabel(S.milestone)) + "</p></div>" +
+        (S.improve.trim() ? "<div><span>" + t("whyImprove") + "</span><p>" + esc(S.improve) + "</p></div>" : "") +
+        "<div><span>" + t("whyMs") + "</span><p>" + esc(milestoneLabels()) + "</p></div>" +
         "<div><span>" + t("whyCrit") + "</span><p>" + S.critical + " / 10 — " + esc(critText(S.critical)) + "</p></div>" +
         (S.about.trim() ? "<div><span>" + t("whyAbout") + "</span><p>" + esc(S.about) + "</p></div>" : "") +
       "</div></div>";

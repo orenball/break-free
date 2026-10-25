@@ -59,10 +59,10 @@ window.BF_I18N = {
       selfNote: "That's fine. This app will be your quiet partner.",
       errShare: "Please choose an answer.", errWho: "Write who you'll share it with.",
 
-      msTitle: "Which milestone are you most looking forward to?",
-      msSub: "We'll highlight it and count down to it.",
+      msTitle: "Which milestones are you most looking forward to?",
+      msSub: "Pick one or more. We'll highlight them and count down to the next one.",
       msCustom: "✏️ Something else", msOther: "Your milestone", msOtherPh: "e.g. a party without drinking",
-      errMs: "Please choose a milestone.", errMsOther: "Write your milestone.",
+      errMs: "Pick at least one milestone.", errMsOther: "Write your milestone.",
 
       whyTitle: "What's the main thing that will help you stick to your goal?",
       whySub: "Write it in one or two sentences, in your own words. You'll see it every day on the Why page.",
@@ -79,7 +79,7 @@ window.BF_I18N = {
       sumTitle: "You're all set 🎉", sumSub: "Here's your plan. Go back to change anything.",
       sName: "Name", sAge: "Age", sQuit: "Quitting", sStart: "Starting", sNow: "Right now",
       sAim: "Goals", sImprove: "What I want to change", sCrit: "How important",
-      sBelief: "Do I believe I can", sShare: "Sharing with", sMs: "Milestone I'm waiting for",
+      sBelief: "Do I believe I can", sShare: "Sharing with", sMs: "Milestones I'm waiting for",
       sWhy: "My why", sRem: "Daily check-in", keepSelf: "Keeping it to myself",
 
       tabHome: "Home", tabWhy: "Why", tabLearn: "Learn", tabCommunity: "Community", tabProfile: "Profile",
@@ -89,6 +89,10 @@ window.BF_I18N = {
       timerTitle: "Free from {habit} for", timerFuture: "Your journey starts in",
       days: "days", hours: "hours", min: "min", sec: "sec",
       checkinBtn: "✅ Daily check-in", slipBtn: "I slipped",
+      checkinDone: "✓ Today is marked — well done!", checkinDoneNo: "Today is marked. Tomorrow is a new day 💪",
+      tipsBtn: "💡 Ways to get through it", tipsTitle: "{habit}: ways to get through it", tipsUrge: "When a craving hits", tipsMore: "More on the Learn page →", tipOfDay: "Tip of the day",
+      dayTitle: "{date}", dayQ: "How did this day go?", dayYes: "✓ It was a clean day", dayNo: "✗ I slipped", dayClear: "Clear this day",
+      dayNoNote: "This only marks the calendar. To restart a habit's timer, use “I slipped” on its card.",
       quoteTitle: "Today's thought",
       bestStreak: "Best streak", restartOne: "Restart", restartMany: "Restarts",
       cleanCheckins: "Clean days checked in", moneySaved: "Money saved", moneyKept: "Money kept",
@@ -96,10 +100,10 @@ window.BF_I18N = {
       milestonesTitle: "Milestones", yourMs: "Your milestone:", msCount: "{n}/{total} milestones", swipeHint: "Swipe to see your other habits",
       msReached: "You reached the milestone you were waiting for: {ms}! Be proud of yourself.",
       msSayNoHint: "When it happens, tap the button below.",
-      msToGo: "{t} to go", msCustomHint: "You'll know when you get there — and it'll feel great.",
+      msToGo: "{t} to go", msAllReached: "You reached every milestone you picked!", msCustomHint: "You'll know when you get there — and it'll feel great.",
       saidNoBtn: "🙅 I said “no” to someone today!", saidNoDone: "🙅 You said “no” on {date}. Proud of you!",
       saidNoToast: "Saying no is a superpower. Well done! 🙅",
-      daysTitle: "Last 14 days", daysLegend: "✓ clean day · ✗ slip · · no check-in",
+      daysTitle: "Last 30 days", daysLegend: "✓ clean day · ✗ slip · · not marked — tap a day to mark it",
       cdD: "{d} d {h} h", cdH: "{h} h {m} min", cdM: "{m} min",
 
       shareCardTitle: "Share your journey",
@@ -110,7 +114,7 @@ window.BF_I18N = {
       shareInstaHint: "For Instagram: copy the link and paste it into your story or bio.",
 
       whyPageTitle: "Why I'm doing this", whyToday: "Remember today",
-      whyGoals: "My goals", whyImprove: "What I want to change", whyMs: "The milestone I'm waiting for",
+      whyGoals: "My goals", whyImprove: "What I want to change", whyMs: "The milestones I'm waiting for",
       whyCrit: "How important this is", whyAbout: "About me", whyEdit: "Edit my sentence",
       wlCrit: "You said this matters {crit}/10 to you. Hold on to that.",
       wlGoals: "You're doing this for {goals}.",
@@ -230,6 +234,23 @@ window.BF_I18N = {
       "3d": "3 days", "1w": "First week", "2w": "Two weeks", "1m": "First month", "3m": "90 days", "1y": "One year"
     },
     crit: ["Good to change, no rush.", "Important to me.", "Very important — I'm serious.", "Life-changing. I have to do this."],
+    tips: {
+      cigarettes: ["Delay the next cigarette by 10 minutes — most cravings pass in that time.", "Keep your hands and mouth busy: gum, a toothpick, a pen.", "Change the routines around smoking: coffee in a new spot, a walk after meals.", "Ask a pharmacist about nicotine patches or gum — they ease withdrawal.", "Clear lighters, ashtrays and spare packs out of your home and car."],
+      alcohol: ["Plan an alcohol-free drink you like before you go out.", "Have a short answer ready: “I'm not drinking tonight.”", "Keep no alcohol at home.", "When the urge hits, eat something and drink water first.", "If you drink heavily every day, talk to a doctor before stopping."],
+      weed: ["Get rid of your gear and papers.", "Build an evening wind-down: shower, a book, no screens in bed.", "Exercise helps with sleep and with irritability.", "Spend less time where you used to smoke.", "Tell the friends you smoked with what you're doing."],
+      drugs: ["Delete the numbers of people who sell.", "Never use alone, and never assume your old dose is safe after a break.", "Fill empty evenings and weekends with plans.", "Reach out to a support group or a treatment service.", "Talk to a doctor about stopping safely."],
+      pills: ["Don't stop suddenly — ask your doctor for a tapering plan.", "Keep regular sleep times.", "Cut down on caffeine and alcohol while you taper.", "Ask about non-drug help for the reason you started.", "Tell someone close what you're going through."],
+      junkfood: ["Plan meals ahead so hunger never makes the choice.", "Keep quick real food ready: fruit, yogurt, nuts, eggs.", "Move delivery apps off your home screen.", "Take a route that doesn't pass your usual spot.", "Eat regular meals with protein to keep cravings down."],
+      sweets: ["Drink a glass of water and wait 10 minutes.", "Don't keep sweets at home.", "Plan a small treat (fruit, dates) instead of random snacking.", "Eat proper meals with protein and fibre.", "Brush your teeth after dinner — it signals that eating is over."],
+      energy: ["Cut down slowly — one can less every few days.", "Drink water first thing in the morning.", "Get daylight and a short walk in the morning.", "Switch to tea before noon while you cut down.", "No caffeine after early afternoon."],
+      coffee: ["Cut down with smaller cups or half-decaf.", "Keep the ritual with herbal tea or decaf.", "Go to bed a little earlier in the first week.", "Expect headaches for a few days — they pass.", "Drink water when the afternoon slump hits."],
+      porn: ["Charge your phone outside the bedroom.", "Use content blockers and delete bookmarks.", "When an urge hits, change rooms or take a shower.", "Notice your triggers: late nights, boredom, being alone.", "Spend time with people — real connection helps."],
+      nailbiting: ["Keep your nails short and smooth.", "Try bitter-tasting nail polish.", "Keep your hands busy with a stress ball or a pen.", "Notice when you bite: in front of a screen, stressed, bored.", "Make a fist for a minute when the urge comes."],
+      betting: ["Delete betting apps and block betting sites.", "Ask your bank to block gambling payments.", "Carry less cash and fewer cards.", "Plan ahead for big games and paydays.", "Talk to a gambling help line or a support group."],
+      tiktok: ["Delete the app, or move it off your home screen.", "Set a daily screen-time limit.", "Keep your phone out of the bedroom.", "Turn on grayscale to make the screen less exciting.", "Have a book or a podcast ready for the gaps."],
+      other: ["Know your triggers and plan for them.", "Replace the habit with a 2-minute healthy action.", "Tell someone what you're doing.", "Remove whatever makes the habit easy.", "Mark every clean day — they add up."],
+      urge: ["Wait 10 minutes — a craving rises and falls like a wave.", "Take 10 slow breaths: in for 4, out for 6.", "Read your sentence on the Why page.", "Call or text someone who supports you.", "Go for a short walk or change rooms."]
+    },
     quotes: {
       alcohol: ["Every sober morning is a gift to tomorrow's you.", "You don't need a drink to relax. You need real rest — and you deserve it.", "A craving is a wave. Ride it out for twenty minutes and it breaks.", "Clear mornings, clear head, clear choices.", "One drink is never just one. Zero is always zero."],
       cigarettes: ["Every cigarette you don't smoke is a breath you get back.", "A craving lasts a few minutes. Your lungs last a lifetime.", "Within days, taste and smell start coming back. Keep going.", "You're not giving something up — you're getting your freedom back.", "Take a deep breath. That's exactly what you're fighting for."],
@@ -305,10 +326,10 @@ window.BF_I18N = {
       selfNote: "זה בסדר גמור. האפליקציה תהיה השותפה השקטה שלך.",
       errShare: "[[בחר|בחרי]] תשובה.", errWho: "[[כתוב|כתבי]] עם מי [[אתה משתף|את משתפת]].",
 
-      msTitle: "לאיזו מטרה [[אתה מחכה|את מחכה]] הכי הרבה?",
-      msSub: "נדגיש אותה ונספור לאחור עד אליה.",
+      msTitle: "לאילו מטרות [[אתה מחכה|את מחכה]] הכי הרבה?",
+      msSub: "אפשר לבחור אחת או כמה. נדגיש אותן ונספור לאחור עד הבאה בתור.",
       msCustom: "✏️ משהו אחר", msOther: "המטרה שלך", msOtherPh: "למשל: מסיבה בלי לשתות",
-      errMs: "[[בחר|בחרי]] מטרה.", errMsOther: "[[כתוב|כתבי]] את המטרה שלך.",
+      errMs: "[[בחר|בחרי]] לפחות מטרה אחת.", errMsOther: "[[כתוב|כתבי]] את המטרה שלך.",
 
       whyTitle: "מהו הגורם המרכזי שיעזור לך להידבק למטרה?",
       whySub: "[[כתוב|כתבי]] את זה במשפט או שניים, במילים שלך. [[תראה|תראי]] את זה כל יום בעמוד \"למה\".",
@@ -325,7 +346,7 @@ window.BF_I18N = {
       sumTitle: "הכול מוכן 🎉", sumSub: "זו התוכנית שלך. אפשר לחזור אחורה ולשנות.",
       sName: "שם", sAge: "גיל", sQuit: "[[משתחרר|משתחררת]] מ־", sStart: "התחלה", sNow: "כרגע",
       sAim: "מה אני רוצה להרוויח", sImprove: "מה אני רוצה לשנות", sCrit: "כמה זה חשוב",
-      sBelief: "האם אני [[מאמין|מאמינה]] שאצליח", sShare: "[[משתף|משתפת]] את", sMs: "המטרה שאני מחכה לה",
+      sBelief: "האם אני [[מאמין|מאמינה]] שאצליח", sShare: "[[משתף|משתפת]] את", sMs: "המטרות שאני מחכה להן",
       sWhy: "הלמה שלי", sRem: "תזכורת יומית", keepSelf: "[[שומר|שומרת]] לעצמי",
 
       tabHome: "בית", tabWhy: "למה", tabLearn: "ללמוד", tabCommunity: "קהילה", tabProfile: "פרופיל",
@@ -334,7 +355,11 @@ window.BF_I18N = {
       greetEvening: "ערב טוב, {name}", greetNight: "לילה טוב, {name}",
       timerTitle: "זמן בלי {habit}", timerFuture: "המסע שלך מתחיל בעוד",
       days: "ימים", hours: "שעות", min: "דקות", sec: "שניות",
-      checkinBtn: "✅ עברתי את היום", slipBtn: "מעדתי",
+      checkinBtn: "✅ עברתי את היום", slipBtn: "נשברתי",
+      checkinDone: "✓ [[סימנת|סימנת]] את היום — כל הכבוד!", checkinDoneNo: "היום סומן. מחר יום חדש 💪",
+      tipsBtn: "💡 דרכים להתגבר", tipsTitle: "{habit}: דרכים להתגבר", tipsUrge: "כשהחשק תוקף", tipsMore: "עוד בעמוד ללמוד ←", tipOfDay: "הטיפ של היום",
+      dayTitle: "{date}", dayQ: "איך עבר היום הזה?", dayYes: "✓ היה יום נקי", dayNo: "✗ נשברתי", dayClear: "ניקוי הסימון",
+      dayNoNote: "זה רק מסמן את לוח הימים. כדי להתחיל טיימר מחדש, [[לחץ|לחצי]] על „נשברתי“ בכרטיס של ההרגל.",
       quoteTitle: "המחשבה של היום",
       bestStreak: "הרצף הכי ארוך", restartOne: "התחלה מחדש", restartMany: "התחלות מחדש",
       cleanCheckins: "ימים נקיים שסימנתי", moneySaved: "כסף שנחסך", moneyKept: "כסף שנשאר בכיס",
@@ -342,10 +367,10 @@ window.BF_I18N = {
       milestonesTitle: "מטרות", yourMs: "המטרה שלך:", msCount: "{n}/{total} מטרות", swipeHint: "[[החלק|החליקי]] הצידה כדי לראות את שאר ההרגלים",
       msReached: "[[הגעת|הגעת]] למטרה [[שחיכית|שחיכית]] לה: {ms}! מגיע לך להיות [[גאה|גאה]] בעצמך.",
       msSayNoHint: "כשזה יקרה, [[לחץ|לחצי]] על הכפתור למטה.",
-      msToGo: "עוד {t}", msCustomHint: "[[תדע|תדעי]] כשתגיע[[|י]] לשם — וזו תהיה הרגשה מעולה.",
+      msToGo: "עוד {t}", msAllReached: "[[הגעת|הגעת]] לכל המטרות [[שבחרת|שבחרת]]!", msCustomHint: "[[תדע|תדעי]] כשתגיע[[|י]] לשם — וזו תהיה הרגשה מעולה.",
       saidNoBtn: "🙅 היום [[אמרתי|אמרתי]] “לא” למישהו!", saidNoDone: "🙅 [[אמרת|אמרת]] “לא” ב־{date}. [[גאים בך|גאים בך]]!",
       saidNoToast: "להגיד לא זה כוח־על. כל הכבוד! 🙅",
-      daysTitle: "14 הימים האחרונים", daysLegend: "✓ יום נקי · ✗ מעידה · · לא סומן",
+      daysTitle: "30 הימים האחרונים", daysLegend: "✓ יום נקי · ✗ נשברתי · · לא סומן — [[לחץ|לחצי]] על יום כדי לסמן אותו",
       cdD: "{d} ימ׳ {h} שע׳", cdH: "{h} שע׳ {m} דק׳", cdM: "{m} דק׳",
 
       shareCardTitle: "[[שתף|שתפי]] את המסע",
@@ -356,7 +381,7 @@ window.BF_I18N = {
       shareInstaHint: "לאינסטגרם: [[העתק|העתיקי]] את הקישור [[והדבק|והדביקי]] בסטורי או בביו.",
 
       whyPageTitle: "למה אני עושה את זה", whyToday: "היום, [[תזכור|תזכרי]]",
-      whyGoals: "מה אני רוצה להרוויח", whyImprove: "מה אני רוצה לשנות", whyMs: "המטרה שאני מחכה לה",
+      whyGoals: "מה אני רוצה להרוויח", whyImprove: "מה אני רוצה לשנות", whyMs: "המטרות שאני מחכה להן",
       whyCrit: "כמה זה חשוב לי", whyAbout: "עליי", whyEdit: "עריכת המשפט",
       wlCrit: "[[אמרת|אמרת]] שזה חשוב לך ברמה {crit}/10. [[תחזיק|תחזיקי]] בזה.",
       wlGoals: "[[אתה עושה|את עושה]] את זה בשביל {goals}.",
@@ -401,21 +426,21 @@ window.BF_I18N = {
 
       ciTitle: "איך עבר היום?",
       moodQ: "איך [[אתה מרגיש|את מרגישה]] היום?", noteLabel: "שורה על היום שלך", notePh: "למשל: בוקר קשה, אבל הליכה עזרה",
-      chartTitle: "הרצף ב־30 הימים האחרונים", chartAria: "רצף נוכחי {d} ימים, {n} מעידות ב־30 הימים האחרונים", chartDays: "{d} ימים", chartNoData: "עוד לא התחיל", chartSlip: "מעידה", today: "היום",
+      chartTitle: "הרצף ב־30 הימים האחרונים", chartAria: "רצף נוכחי {d} ימים, {n} פעמים שנשברתי ב־30 הימים האחרונים", chartDays: "{d} ימים", chartNoData: "עוד לא התחיל", chartSlip: "נשברתי", today: "היום",
       journalTitle: "היומן שלי", journalEmpty: "מצב הרוח וההערות היומיות שלך יופיעו כאן אחרי שתסמן[[|י]] את היום.",
       ciQ: "[[עברת|עברת]] את היום בלי להיכנע ל{habit}?",
-      ciNo: "לא, מעדתי", ciYes: "כן, הצלחתי!", ciLater: "[[תשאל|תשאלי]] אותי אחר כך",
+      ciNo: "לא, נשברתי", ciYes: "כן, הצלחתי!", ciLater: "[[תשאל|תשאלי]] אותי אחר כך",
       ciBanner: "📝 הגיע הזמן לסכם את היום.", ciNow: "לסיכום היום",
       yesTitle: "מדהים — [[הצלחת|הצלחת]]!", yesText: "עוד יום של ניצחון. {days}כל יום כזה מקרב אותך אל {goals}.",
       yesDays: "כבר {d} בלי. ", thanks: "תודה! 💚",
 
-      slipTitle: "[[מעדת|מעדת]]?",
+      slipTitle: "[[נשברת|נשברת]]?",
       slipText: "זה בסדר להיות [[כן|כנה]] — זה חלק מלהתחזק. הטיימר יתחיל מחדש מעכשיו, והרצף הכי ארוך שלך נשאר שמור.",
-      slipCancel: "לא, אני [[ממשיך|ממשיכה]]", slipConfirm: "כן, מעדתי",
-      slipTitleFor: "[[מעדת|מעדת]] עם {habit}?",
-      ciWhich: "באיזה הרגל [[מעדת|מעדת]]?", ciWhichSub: "רק הטיימרים האלה יתחילו מחדש. כל השאר ממשיכים.",
+      slipCancel: "לא, אני [[ממשיך|ממשיכה]]", slipConfirm: "כן, נשברתי",
+      slipTitleFor: "[[נשברת|נשברת]] עם {habit}?",
+      ciWhich: "באיזה הרגל [[נשברת|נשברת]]?", ciWhichSub: "רק הטיימרים האלה יתחילו מחדש. כל השאר ממשיכים.",
       ciWhichBtn: "להתחיל אותם מחדש", ciWhichErr: "[[בחר|בחרי]] לפחות הרגל אחד.",
-      relTitle: "מעידה היא לא הסוף",
+      relTitle: "להישבר זה לא הסוף",
       relProof: "כבר [[הוכחת|הוכחת]] שאפשר להחזיק {held} בלי זה. הכוח הזה עדיין בך.",
       relNew: "כל התחלה חדשה מלמדת משהו על מה שמעורר אצלך חשק. מה שחשוב זה לקום שוב.",
       relRemember: "[[תזכור|תזכרי]] למה [[התחלת|התחלת]]:", relRestart: "הטיימר מתחיל מחדש עכשיו. בוא[[|י]] נשבור את השיא.",
@@ -468,7 +493,7 @@ window.BF_I18N = {
       yes: { label: "כן, [[בטוח|בטוחה]]! 💪", reply: "איזו אנרגיה. בימים קשים, [[תחזור|תחזרי]] לכאן [[ותזכור|ותזכרי]] שאמרת את זה." },
       think: { label: "[[אני חושב|אני חושבת]] שכן", reply: "זו התחלה חזקה. הביטחון גדל עם כל יום [[שאתה עובר|שאת עוברת]]." },
       unsure: { label: "[[אני לא בטוח|אני לא בטוחה]]", reply: "זו תשובה כנה, וכנות זה טוב. לא צריך להיות [[בטוח|בטוחה]] — צריך רק לעבור את היום." },
-      scared: { label: "[[אני מפחד|אני מפחדת]] שלא", reply: "הפחד אומר שזה חשוב לך. מעידות קורות, והאפליקציה תעזור לך לקום בכל פעם מחדש." }
+      scared: { label: "[[אני מפחד|אני מפחדת]] שלא", reply: "הפחד אומר שזה חשוב לך. לפעמים נשברים, והאפליקציה תעזור לך לקום בכל פעם מחדש." }
     },
     share: { person: "אדם מסוים", community: "קהילה או קבוצת תמיכה", self: "[[שומר|שומרת]] לעצמי" },
     milestones: {
@@ -476,6 +501,23 @@ window.BF_I18N = {
       "3d": "3 ימים", "1w": "השבוע הראשון", "2w": "שבועיים", "1m": "החודש הראשון", "3m": "90 יום", "1y": "שנה"
     },
     crit: ["טוב לשנות, אין לחץ.", "חשוב לי.", "חשוב מאוד — [[אני רציני|אני רצינית]].", "משנה חיים. [[אני חייב|אני חייבת]] לעשות את זה."],
+    tips: {
+      cigarettes: ["[[דחה|דחי]] את הסיגריה הבאה ב־10 דקות — רוב החשקים עוברים בזמן הזה.", "[[תעסיק|תעסיקי]] את הידיים והפה: מסטיק, קיסם, עט.", "[[שנה|שני]] את השגרה סביב העישון: קפה במקום אחר, הליכה אחרי ארוחה.", "[[שאל|שאלי]] ברוקחות על מדבקות או מסטיקים של ניקוטין — הם מקלים על הגמילה.", "[[הוצא|הוציאי]] מצתים, מאפרות וחפיסות מהבית ומהרכב."],
+      alcohol: ["[[תכנן|תכנני]] משקה בלי אלכוהול [[שאתה אוהב|שאת אוהבת]] לפני שיוצאים.", "[[הכן|הכיני]] תשובה קצרה: „אני לא שותה הערב.“", "אל [[תשאיר|תשאירי]] אלכוהול בבית.", "כשהחשק מגיע, [[אכול|אכלי]] משהו [[ושתה|ושתי]] מים קודם.", "אם [[אתה שותה|את שותה]] הרבה כל יום, [[דבר|דברי]] עם רופא לפני שמפסיקים."],
+      weed: ["[[היפטר|היפטרי]] מהציוד ומהניירות.", "[[בנה|בני]] שגרת ערב מרגיעה: מקלחת, ספר, בלי מסכים במיטה.", "פעילות גופנית עוזרת לשינה ולעצבנות.", "[[תבלה|תבלי]] פחות במקומות שבהם עישנת.", "[[ספר|ספרי]] לחברים שעישנת איתם מה [[אתה עושה|את עושה]]."],
+      drugs: ["[[מחק|מחקי]] את המספרים של מי שמוכר.", "לעולם אל [[תשתמש|תשתמשי]] לבד, ואל [[תניח|תניחי]] שהמינון הישן בטוח אחרי הפסקה.", "[[מלא|מלאי]] ערבים וסופי שבוע ריקים בתוכניות.", "[[פנה|פני]] לקבוצת תמיכה או לשירות טיפול.", "[[דבר|דברי]] עם רופא על הפסקה בטוחה."],
+      pills: ["אל [[תפסיק|תפסיקי]] בבת אחת — [[בקש|בקשי]] מהרופא תוכנית הפחתה.", "[[שמור|שמרי]] על שעות שינה קבועות.", "[[הפחת|הפחיתי]] קפאין ואלכוהול בזמן ההפחתה.", "[[שאל|שאלי]] על עזרה לא תרופתית לסיבה [[שבגללה התחלת|שבגללה התחלת]].", "[[ספר|ספרי]] למישהו קרוב מה עובר עליך."],
+      junkfood: ["[[תכנן|תכנני]] ארוחות מראש כדי שהרעב לא יחליט בשבילך.", "[[שמור|שמרי]] אוכל אמיתי ומהיר בהישג יד: פירות, יוגורט, אגוזים, ביצים.", "[[הוצא|הוציאי]] את אפליקציות המשלוחים ממסך הבית.", "[[עבור|עברי]] בדרך שלא עוברת ליד המקום הקבוע.", "[[אכול|אכלי]] ארוחות קבועות עם חלבון כדי להפחית חשקים."],
+      sweets: ["[[שתה|שתי]] כוס מים [[וחכה|וחכי]] 10 דקות.", "אל [[תשאיר|תשאירי]] ממתקים בבית.", "[[תכנן|תכנני]] פינוק קטן (פרי, תמרים) במקום נשנוש מקרי.", "[[אכול|אכלי]] ארוחות מסודרות עם חלבון וסיבים.", "[[צחצח|צחצחי]] שיניים אחרי ארוחת הערב — זה סימן שהאוכל נגמר."],
+      energy: ["[[הפחת|הפחיתי]] לאט — פחית אחת פחות כל כמה ימים.", "[[שתה|שתי]] מים כבר בבוקר.", "[[צא|צאי]] לאור יום ולהליכה קצרה בבוקר.", "[[עבור|עברי]] לתה לפני הצהריים בזמן ההפחתה.", "בלי קפאין אחרי תחילת אחר הצהריים."],
+      coffee: ["[[הפחת|הפחיתי]] עם כוסות קטנות או חצי נטול קפאין.", "[[שמור|שמרי]] על הטקס עם תה צמחים או נטול קפאין.", "[[לך|לכי]] לישון קצת יותר מוקדם בשבוע הראשון.", "כאבי ראש בימים הראשונים הם צפויים — הם עוברים.", "[[שתה|שתי]] מים כשמגיעה העייפות של אחר הצהריים."],
+      porn: ["[[טען|טעני]] את הטלפון מחוץ לחדר השינה.", "[[השתמש|השתמשי]] בחוסמי תוכן [[ומחק|ומחקי]] סימניות.", "כשמגיע דחף, [[עבור|עברי]] חדר או [[היכנס|היכנסי]] למקלחת.", "[[שים|שימי]] לב לטריגרים: מאוחר בלילה, שעמום, לבד.", "[[בלה|בלי]] זמן עם אנשים — קשר אמיתי עוזר."],
+      nailbiting: ["[[שמור|שמרי]] על ציפורניים קצרות וחלקות.", "[[נסה|נסי]] לק בטעם מר.", "[[תעסיק|תעסיקי]] את הידיים בכדור לחץ או בעט.", "[[שים|שימי]] לב מתי [[אתה כוסס|את כוססת]]: מול מסך, בלחץ, בשעמום.", "[[קפוץ|קפצי]] אגרוף לדקה כשמגיע הדחף."],
+      betting: ["[[מחק|מחקי]] אפליקציות הימורים [[וחסום|וחסמי]] אתרי הימורים.", "[[בקש|בקשי]] מהבנק לחסום תשלומים להימורים.", "[[סחוב|סחבי]] פחות מזומן ופחות כרטיסים.", "[[תכנן|תכנני]] מראש לימי משחקים גדולים ולימי משכורת.", "[[דבר|דברי]] עם קו סיוע להימורים או עם קבוצת תמיכה."],
+      tiktok: ["[[מחק|מחקי]] את האפליקציה, או [[הוצא|הוציאי]] אותה ממסך הבית.", "[[הגדר|הגדירי]] מגבלת זמן מסך יומית.", "[[השאר|השאירי]] את הטלפון מחוץ לחדר השינה.", "[[הפעל|הפעילי]] גווני אפור כדי שהמסך יהיה פחות מרגש.", "[[הכן|הכיני]] ספר או פודקאסט לרגעים הריקים."],
+      other: ["[[הכר|הכירי]] את הטריגרים [[ותכנן|ותכנני]] מראש.", "[[החלף|החליפי]] את ההרגל בפעולה בריאה של 2 דקות.", "[[ספר|ספרי]] למישהו מה [[אתה עושה|את עושה]].", "[[הרחק|הרחיקי]] את מה שהופך את ההרגל לקל.", "[[סמן|סמני]] כל יום נקי — הם מצטברים."],
+      urge: ["[[חכה|חכי]] 10 דקות — חשק עולה ויורד כמו גל.", "[[קח|קחי]] 10 נשימות איטיות: שאיפה ל־4, נשיפה ל־6.", "[[קרא|קראי]] את המשפט שלך בעמוד „למה“.", "[[התקשר|התקשרי]] או [[שלח|שלחי]] הודעה למישהו שתומך בך.", "[[צא|צאי]] להליכה קצרה או [[עבור|עברי]] חדר."]
+    },
     quotes: {
       alcohol: ["כל בוקר פיכח הוא מתנה לעצמך של מחר.", "לא צריך משקה כדי להירגע. צריך מנוחה אמיתית — ומגיעה לך.", "חשק הוא גל. [[תחזיק|תחזיקי]] עשרים דקות והוא יישבר.", "בקרים צלולים, ראש צלול, החלטות צלולות.", "משקה אחד אף פעם לא נשאר אחד. אפס תמיד נשאר אפס."],
       cigarettes: ["כל סיגריה [[שלא עישנת|שלא עישנת]] היא נשימה שחוזרת אליך.", "חשק נמשך כמה דקות. הריאות שלך — כל החיים.", "תוך כמה ימים הטעם והריח מתחילים לחזור. [[תמשיך|תמשיכי]].", "[[אתה לא מוותר|את לא מוותרת]] על משהו — [[אתה מקבל|את מקבלת]] בחזרה את החופש.", "[[קח|קחי]] נשימה עמוקה. בשביל זה בדיוק [[אתה נלחם|את נלחמת]]."],
@@ -496,3 +538,5 @@ window.BF_I18N = {
 };
 window.BF_I18N.en.quotes.reels = window.BF_I18N.en.quotes.tiktok;
 window.BF_I18N.he.quotes.reels = window.BF_I18N.he.quotes.tiktok;
+window.BF_I18N.en.tips.reels = window.BF_I18N.en.tips.tiktok;
+window.BF_I18N.he.tips.reels = window.BF_I18N.he.tips.tiktok;

@@ -16,6 +16,16 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.owner == request.auth.uid;
     }
 
+    // Ideas for the app: anyone signed in can send one; nobody can read them from the app
+    // (the owner reads them in the Firebase console).
+    match /feedback/{id} {
+      allow create: if request.auth != null
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 1000;
+      allow read, update, delete: if false;
+    }
+
     // Community totals: everyone can read; only the GitHub job (admin key) writes it.
     match /stats/{doc} {
       allow read: if true;

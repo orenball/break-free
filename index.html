@@ -364,16 +364,16 @@
 <div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="i18n.js?v=2026.10.25-1"></script>
-<script src="articles.js?v=2026.10.25-1" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
-<script src="firebase-config.js?v=2026.10.25-1"></script>
+<script src="i18n.js?v=2026.10.25-2"></script>
+<script src="articles.js?v=2026.10.25-2" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
+<script src="firebase-config.js?v=2026.10.25-2"></script>
 <script>
 (function () {
   "use strict";
 
   /* ================= constants ================= */
   var KEY = "breakFree.app.v1";
-  var APP_VERSION = "2026.10.25-1"; /* bump when publishing; shown at the bottom of Profile */
+  var APP_VERSION = "2026.10.25-2"; /* bump when publishing; shown at the bottom of Profile */
   var FB_VER = "10.12.2";
   var EMO = {
     alcohol: "🍺", cigarettes: "🚬", weed: "🌿", drugs: "💉", pills: "💊", junkfood: "🍔", sweets: "🍬",
@@ -411,7 +411,7 @@
       habits: [], currency: "₪",
       goals: [], goalOther: "", improve: "", critical: 7, belief: null,
       share: null, shareName: "", milestones: [], milestoneOther: "",
-      why: "", reminderTimes: ["20:00"],
+      why: "", reminderTimes: ["20:00"], priceDaily: true,
       checkins: {}, journal: {}, lastPrompt: null,
       shareId: null, notify: false, fcmToken: null
     };
@@ -450,6 +450,15 @@
     });
     if (!Array.isArray(s.reminderTimes)) s.reminderTimes = [s.reminderTime || "20:00"];
     if (!s.journal) s.journal = {};
+    /* prices used to be per week; they are per day now */
+    if (!s.priceDaily) {
+      (s.habits || []).forEach(function (h) {
+        var perDay = function (v) { return v === "" || v == null || isNaN(+v) ? v : String(Math.round(+v / 7 * 10) / 10); };
+        h.cost = perDay(h.cost);
+        if (h.key === "betting") h.amount = perDay(h.amount);
+      });
+      s.priceDaily = true;
+    }
     if (!Array.isArray(s.milestones)) s.milestones = s.milestone ? [s.milestone] : [];
     delete s.milestone;
     (s.habits || []).forEach(function (h) { if (!h.firstStart) h.firstStart = h.streakStart; if (!Array.isArray(h.slips)) h.slips = []; });
@@ -671,7 +680,7 @@
             }).join("") + "</div>";
           } else if (m.money) {
             needCur = true;
-            html += "<label class='field' for='amt" + i + "'>" + esc(q) + " (" + S.currency + ")</label><input type='number' id='amt" + i + "' min='0' step='any' inputmode='decimal' value='" + esc(h.amount) + "' placeholder='200'>";
+            html += "<label class='field' for='amt" + i + "'>" + esc(q) + " (" + S.currency + ")</label><input type='number' id='amt" + i + "' min='0' step='any' inputmode='decimal' value='" + esc(h.amount) + "' placeholder='30'>";
             html += "<label class='field' for='amtb" + i + "'>" + esc(x.second) + "</label><input type='number' id='amtb" + i + "' min='0' step='any' inputmode='decimal' value='" + esc(h.amount2) + "' placeholder='5'>";
           } else {
             html += "<label class='field' for='amt" + i + "'>" + esc(q) + "</label><input type='number' id='amt" + i + "' min='0' step='any' inputmode='decimal' value='" + esc(h.amount) + "' placeholder='10'>";
@@ -679,7 +688,7 @@
           if (m.costly) {
             needCur = true;
             html += "<label class='field' for='cost" + i + "'>" + t("costQ") + " <span class='muted'>" + t("optional") + "</span></label>" +
-              "<input type='number' id='cost" + i + "' min='0' step='any' inputmode='decimal' value='" + esc(h.cost) + "' placeholder='50'>";
+              "<input type='number' id='cost" + i + "' min='0' step='any' inputmode='decimal' value='" + esc(h.cost) + "' placeholder='20'>";
           }
         });
         return html;
@@ -884,9 +893,9 @@
   function usageText(h) {
     var x = hab(h.key), m = HABIT_META[h.key] || {}, per = L().per;
     if (m.choice) return L().freq[+h.freqChoice] || "";
-    if (m.money) return S.currency + h.amount + " " + per.week + ", " + h.amount2 + " " + x.unit + " " + per.week;
+    if (m.money) return S.currency + h.amount + " " + per.day + ", " + h.amount2 + " " + x.unit + " " + per.week;
     var s = h.amount + " " + x.unit + " " + per[m.per];
-    if (h.cost) s += " (" + S.currency + h.cost + " " + per.week + ")";
+    if (h.cost) s += " (" + S.currency + h.cost + " " + per.day + ")";
     return s;
   }
 
@@ -1125,11 +1134,11 @@
         stat(h.restarts, h.restarts === 1 ? t("restartOne") : t("restartMany"));
       if (m.money) {
         html += stat("~" + fmtNum((+h.amount2 || 0) / 7 * days), x.avoided);
-        html += stat(S.currency + fmtNum((+h.amount || 0) / 7 * days), t("moneyKept"));
+        html += stat(S.currency + fmtNum((+h.amount || 0) * days), t("moneyKept"));
       } else {
         var perDay = m.choice ? freqPerDay(h) : m.per === "day" ? (+h.amount || 0) : (+h.amount || 0) / 7;
         if (!m.choice || h.freqChoice !== "") html += stat("~" + fmtNum(perDay * days), x.avoided);
-        if (h.cost) html += stat(S.currency + fmtNum((+h.cost) / 7 * days), t("moneySaved"));
+        if (h.cost) html += stat(S.currency + fmtNum((+h.cost) * days), t("moneySaved"));
       }
       $("stats" + i).innerHTML = html;
     });
@@ -1454,6 +1463,9 @@
         "<label class='field'>" + t("remTimes") + "</label><div id='prRemBox'></div><p class='small muted'>" + t("remSub") + "</p>" +
         "<div class='error' id='prErr'></div><div class='actions' style='margin-top:8px'><button class='primary' id='prSave'>" + t("save") + "</button></div></div>" +
       habitsCardHtml() +
+      "<div class='card'><h3>" + t("fbTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("fbSub") + "</p>" +
+        "<textarea id='fbText' maxlength='1000' placeholder='" + esc(t("fbPh")) + "'></textarea>" +
+        "<div class='error' id='fbErr' role='alert'></div><div class='actions' style='margin-top:8px'><button class='primary' id='fbSend'>" + t("fbSend") + "</button></div></div>" +
       "<div class='card'><h3>" + t("notifTitle") + "</h3>" + notifHtml +
         (FB.uid ? "<p class='small muted' style='margin:10px 0 0'>" + t("deviceCode", { code: FB.uid.slice(-6) }) + "</p>" : "") + "</div>" +
       (installEvent ? "<div class='card'><div class='actions'><button id='installBtn'>" + t("installBtn") + "</button></div></div>" : "") +
@@ -1474,6 +1486,16 @@
     });
     var remDraft = S.reminderTimes.slice();
     mountRemEditor("prRemBox", remDraft);
+    $("fbSend").addEventListener("click", function () {
+      var text = $("fbText").value.trim();
+      if (text.length < 3) { $("fbErr").textContent = t("fbShort"); return; }
+      if (!FB.ready) { $("fbErr").textContent = t("fbOffline"); return; }
+      $("fbSend").disabled = true;
+      FB.db.collection("feedback").add({ text: text, lang: S.lang, version: APP_VERSION, createdAt: Date.now() })
+        .then(function () { $("fbText").value = ""; $("fbErr").textContent = ""; toast(t("fbThanks")); })
+        .catch(function () { $("fbErr").textContent = t("fbError"); })
+        .then(function () { $("fbSend").disabled = false; });
+    });
     $("pProfile").querySelectorAll("[data-edp]").forEach(function (b) { b.addEventListener("click", function () { openEditPrice(+b.dataset.edp); }); });
     $("pProfile").querySelectorAll("[data-rmh]").forEach(function (b) { b.addEventListener("click", function () { askRemoveHabit(+b.dataset.rmh); }); });
     if ($("addHabitBtn")) $("addHabitBtn").addEventListener("click", function () { openAddHabit(null); });
@@ -1501,7 +1523,7 @@
     return "<div class='card'><h3>" + t("myHabits") + "</h3><div>" + S.habits.map(function (h, i) {
       var since = h.streakStart ? new Date(h.streakStart).toLocaleDateString(L().locale, { day: "numeric", month: "short", year: "numeric" }) : "";
       var m = HABIT_META[h.key] || {}, price = m.money ? h.amount : h.cost;
-      var details = [since ? t("sinceDate", { date: since }) : ""].concat(m.costly || m.money ? [price !== "" && price != null ? t("pricePerWeek", { p: S.currency + price }) : t("noPrice")] : []).filter(Boolean).join(" · ");
+      var details = [since ? t("sinceDate", { date: since }) : ""].concat(m.costly || m.money ? [price !== "" && price != null ? t("pricePerDay", { p: S.currency + price }) : t("noPrice")] : []).filter(Boolean).join(" · ");
       return "<div class='habit-row'><span class='hr-info'><b>" + EMO[h.key] + " " + esc(habitLabel(h)) + "</b><small>" + esc(details) + "</small></span>" +
         "<span class='row-btns'>" + (m.costly || m.money ? "<button class='ghost' data-edp='" + i + "'>" + t("editPrice") + "</button>" : "") +
         (S.habits.length > 1 ? "<button class='ghost' data-rmh='" + i + "'>" + t("remove") + "</button>" : "") + "</span></div>";

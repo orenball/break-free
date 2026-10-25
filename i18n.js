@@ -33,7 +33,7 @@ window.BF_I18N = {
 
       amtTitle: "How much right now?",
       amtSub: "Be honest — only you see this. It's how we measure how far you've come.",
-      costQ: "About how much does it cost you a week?",
+      costQ: "About how much does it cost you a day?",
       errNum: "Please enter a number.", errBets: "Please enter how many bets you place a week.", errChoice: "Please choose an answer.",
 
       goalsTitle: "What are your goals?",
@@ -137,8 +137,11 @@ window.BF_I18N = {
 
       profPageTitle: "Profile & settings", save: "Save", saved: "Saved ✓",
       language: "Language", currency: "Currency",
-      editPrice: "Edit price", editPriceTitle: "{habit}: how much it costs", pricePerWeek: "{p} a week", noPrice: "no price set",
+      editPrice: "Edit price", editPriceTitle: "{habit}: how much it costs", pricePerDay: "{p} a day", noPrice: "no price set",
       priceNote: "Money saved is recalculated with the new price.", priceSaved: "Price updated ✓",
+      fbTitle: "💬 Ideas for the app", fbSub: "Something missing, confusing or broken? Tell us — your message is sent without your name.",
+      fbPh: "Write your idea here…", fbSend: "Send", fbThanks: "Thanks! Your idea was sent 💚", fbShort: "Write a few words first.",
+      fbOffline: "Sending needs an internet connection.", fbError: "Couldn't send right now. Please try again.",
       myHabits: "My habits", addHabit: "Add a habit", addHabitBtn: "Add", remove: "Remove", sinceDate: "since {date}",
       habitAdded: "{habit} added — its timer is running.", habitRemoved: "Habit removed.",
       removeHabitTitle: "Remove {habit}?", removeHabitText: "Its timer, streak and milestones will be deleted. Your other habits aren't affected.",
@@ -206,7 +209,7 @@ window.BF_I18N = {
       coffee:     { label: "Coffee", q: "How many cups of coffee do you drink a day?", unit: "cups", avoided: "cups skipped" },
       porn:       { label: "Porn", q: "How many hours a day do you spend on it?", unit: "hours", avoided: "hours back" },
       nailbiting: { label: "Nail biting", q: "How often do you bite your nails?", unit: "times", avoided: "times not bitten" },
-      betting:    { label: "Betting", q: "How much money do you bet a week?", second: "How many bets do you place a week?", unit: "bets", avoided: "bets not placed" },
+      betting:    { label: "Betting", q: "How much money do you bet on an average day?", second: "How many bets do you place a week?", unit: "bets", avoided: "bets not placed" },
       tiktok:     { label: "TikTok", short: "TikTok", q: "How many hours a day do you spend on TikTok?", unit: "hours", avoided: "hours back" },
       reels:      { label: "Instagram Reels", short: "Reels", q: "How many hours a day do you watch Reels?", unit: "hours", avoided: "hours back" },
       other:      { label: "Something else", q: "How often do you do it?", unit: "times", avoided: "times avoided" }
@@ -300,7 +303,7 @@ window.BF_I18N = {
 
       amtTitle: "כמה היום?",
       amtSub: "[[תהיה כן|תהיי כנה]] — רק [[אתה רואה|את רואה]] את זה. כך נמדוד כמה [[התקדמת|התקדמת]].",
-      costQ: "בערך כמה זה עולה לך בשבוע?",
+      costQ: "בערך כמה זה עולה לך ביום?",
       errNum: "[[הזן|הזיני]] מספר.", errBets: "[[הזן|הזיני]] כמה הימורים [[אתה מבצע|את מבצעת]] בשבוע.", errChoice: "[[בחר|בחרי]] תשובה.",
 
       goalsTitle: "מה המטרות שלך?",
@@ -404,8 +407,11 @@ window.BF_I18N = {
 
       profPageTitle: "פרופיל והגדרות", save: "שמירה", saved: "נשמר ✓",
       language: "שפה", currency: "מטבע",
-      editPrice: "עריכת מחיר", editPriceTitle: "{habit}: כמה זה עולה", pricePerWeek: "{p} בשבוע", noPrice: "לא הוגדר מחיר",
+      editPrice: "עריכת מחיר", editPriceTitle: "{habit}: כמה זה עולה", pricePerDay: "{p} ליום", noPrice: "לא הוגדר מחיר",
       priceNote: "הכסף שנחסך יחושב מחדש לפי המחיר החדש.", priceSaved: "המחיר עודכן ✓",
+      fbTitle: "💬 רעיונות לאפליקציה", fbSub: "משהו חסר, מבלבל או לא עובד? [[ספר|ספרי]] לנו — ההודעה נשלחת בלי השם שלך.",
+      fbPh: "[[כתוב|כתבי]] כאן את הרעיון שלך…", fbSend: "שליחה", fbThanks: "תודה! הרעיון שלך נשלח 💚", fbShort: "[[כתוב|כתבי]] קודם כמה מילים.",
+      fbOffline: "שליחה דורשת חיבור לאינטרנט.", fbError: "לא הצלחנו לשלוח כרגע. [[נסה|נסי]] שוב.",
       myHabits: "ההרגלים שלי", addHabit: "הוספת הרגל", addHabitBtn: "הוספה", remove: "הסרה", sinceDate: "מאז {date}",
       habitAdded: "ההרגל „{habit}“ נוסף, והטיימר שלו כבר רץ.", habitRemoved: "ההרגל הוסר.",
       removeHabitTitle: "להסיר את „{habit}“?", removeHabitText: "הטיימר, הרצף והמטרות של ההרגל הזה יימחקו. שאר ההרגלים לא מושפעים.",
@@ -473,7 +479,7 @@ window.BF_I18N = {
       coffee:     { label: "קפה", q: "כמה כוסות קפה [[אתה שותה|את שותה]] ביום?", unit: "כוסות", avoided: "כוסות שלא נשתו" },
       porn:       { label: "פורנו", q: "כמה שעות ביום זה לוקח לך?", unit: "שעות", avoided: "שעות שחזרו אליך" },
       nailbiting: { label: "כסיסת ציפורניים", q: "באיזו תדירות [[אתה כוסס|את כוססת]] ציפורניים?", unit: "פעמים", avoided: "פעמים בלי לכסוס" },
-      betting:    { label: "הימורים", q: "על כמה כסף [[אתה מהמר|את מהמרת]] בשבוע?", second: "כמה הימורים [[אתה מבצע|את מבצעת]] בשבוע?", unit: "הימורים", avoided: "הימורים שלא בוצעו" },
+      betting:    { label: "הימורים", q: "על כמה כסף [[אתה מהמר|את מהמרת]] ביום, בממוצע?", second: "כמה הימורים [[אתה מבצע|את מבצעת]] בשבוע?", unit: "הימורים", avoided: "הימורים שלא בוצעו" },
       tiktok:     { label: "טיקטוק", q: "כמה שעות ביום [[אתה מבלה|את מבלה]] בטיקטוק?", unit: "שעות", avoided: "שעות שחזרו אליך" },
       reels:      { label: "ריילס באינסטגרם", short: "ריילס", q: "כמה שעות ביום [[אתה צופה|את צופה]] בריילס?", unit: "שעות", avoided: "שעות שחזרו אליך" },
       other:      { label: "משהו אחר", q: "באיזו תדירות [[אתה עושה|את עושה]] את זה?", unit: "פעמים", avoided: "פעמים שנמנעו" }

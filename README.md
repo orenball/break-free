@@ -70,6 +70,8 @@ GitHub's own timer often runs hours late, so a small script in your Google accou
 3. **Project Settings → Script Properties:** add `GITHUB_TOKEN` with the key as its value, then **Save script properties**.
 4. Run **startJob** once (allow access when asked; the log should say *GitHub answered 204*), then run **createTimer** once.
 
+**Idea alerts for the owner:** in GitHub, **Settings → Secrets and variables → Actions → Variables**, the variable `OWNER_DEVICE` holds the owner's device code (bottom of the app's Profile page). Every new idea sent from Profile triggers a notification to that phone within about 5 minutes. If the phone ever shows a new device code (e.g. after reinstalling the app), update this variable.
+
 **Testing one phone:** in GitHub, **Actions → Daily push → Run workflow**, fill in the device code shown at the bottom of the app's Profile page. That sends one test notification to that phone.
 
 ### 4. Install it on a phone

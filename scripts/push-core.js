@@ -124,7 +124,7 @@ export function chunks(arr, n) {
 /* ---------- one run ---------- */
 
 // opts: { db, messaging, now, appUrl, testDevice?, log? }
-export async function runDailyPush(opts) {
+export async function runDailyPush(opts) { // opts.ownerDevice: device code of the app owner, for idea alerts
   const { db, messaging, now, appUrl } = opts;
   const log = opts.log || console.log;
   const snap = await db.collection("users").get();
@@ -180,9 +180,47 @@ export async function runDailyPush(opts) {
     }));
   }
 
+  await notifyOwnerOfIdeas({ db, messaging, users, ownerDevice: opts.ownerDevice, log });
+
   const summary = computeSummary(users, now);
   await db.collection("stats").doc("summary").set(summary);
 
   log(`users: ${users.length}, due: ${due.length}, sent: ${sent}, invalid tokens cleared: ${invalid}, other failures: ${failed}`);
   log(`summary: ${summary.users} active users, ${summary.checkedInToday} checked in today`);
+}
+
+// Tell the app's owner about new ideas sent from Profile → "Ideas for the app".
+// The owner's phone is found by its device code (the GitHub variable OWNER_DEVICE).
+// Remembers the newest idea already reported in stats/meta, so each idea is reported once.
+export const IDEAS_URL = "https://console.firebase.google.com/project/break-free-9722f/firestore/databases/-default-/data/~2Ffeedback";
+export function ideaMessage(token, ideas) {
+  const first = String(ideas[0].text || "").replace(/\s+/g, " ").trim();
+  const body = ideas.length === 1
+    ? (first.length > 120 ? first.slice(0, 117) + "…" : first)
+    : `${ideas.length} new ideas. Latest: ${first.length > 90 ? first.slice(0, 87) + "…" : first}`;
+  return {
+    token,
+    notification: { title: "💬 New idea for Break Free", body },
+    webpush: { fcmOptions: { link: IDEAS_URL }, notification: { tag: "breakfree-idea" } },
+    data: { type: "idea" },
+  };
+}
+async function notifyOwnerOfIdeas({ db, messaging, users, ownerDevice, log }) {
+  const code = (ownerDevice || "").trim();
+  if (code.length < 6) return;
+  const owner = users.find((u) => u.id.endsWith(code));
+  if (!owner || !owner.fcmToken) { log(`ideas: owner device ${code} not found or has no notification sign-up`); return; }
+  const metaRef = db.collection("stats").doc("meta");
+  const meta = (await metaRef.get()).data() || {};
+  const since = typeof meta.lastIdeaAt === "number" ? meta.lastIdeaAt : 0;
+  const snap = await db.collection("feedback").where("createdAt", ">", since).orderBy("createdAt", "desc").limit(20).get();
+  if (snap.empty) return;
+  const ideas = snap.docs.map((d) => d.data());
+  try {
+    await messaging.send(ideaMessage(owner.fcmToken, ideas));
+    await metaRef.set({ lastIdeaAt: ideas[0].createdAt }, { merge: true });
+    log(`ideas: told the owner about ${ideas.length} new idea(s)`);
+  } catch (e) {
+    log(`ideas: couldn't notify the owner: ${e.code || e.message || e}`);
+  }
 }

@@ -44,7 +44,7 @@ async function realRun(now) {
   const db = getFirestore();
   const messaging = getMessaging();
 
-  await runDailyPush({ db, messaging, now, appUrl, testDevice: process.env.TEST_DEVICE });
+  await runDailyPush({ db, messaging, now, appUrl, testDevice: process.env.TEST_DEVICE, ownerDevice: process.env.OWNER_DEVICE });
 }
 
 const args = process.argv.slice(2);

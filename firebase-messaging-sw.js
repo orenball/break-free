@@ -27,8 +27,14 @@ self.addEventListener("fetch", function (event) {
 /* Tapping the notification opens (or focuses) the app on the check-in. */
 self.addEventListener("notificationclick", function (event) {
   event.notification.close();
+  var tag = event.notification.tag || "";
+  /* idea alerts (for the app's owner) open the ideas list in the Firebase console */
+  if (tag.indexOf("breakfree-idea") === 0) {
+    event.waitUntil(self.clients.openWindow("https://console.firebase.google.com/project/break-free-9722f/firestore/databases/-default-/data/~2Ffeedback"));
+    return;
+  }
   /* encouragement reminders open the Why page; the daily question opens the check-in */
-  var isBoost = (event.notification.tag || "").indexOf("breakfree-boost") === 0;
+  var isBoost = tag.indexOf("breakfree-boost") === 0;
   var target = new URL(isBoost ? "./#why" : "./#checkin", self.registration.scope).href;
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {

@@ -34,3 +34,4 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           APP_URL: ${{ vars.APP_URL }}
           TEST_DEVICE: ${{ inputs.test_device }}
+          OWNER_DEVICE: ${{ vars.OWNER_DEVICE }}

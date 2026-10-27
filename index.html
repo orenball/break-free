@@ -169,6 +169,7 @@
   .slip-wrap { text-align: center; margin-top: 8px; }
   .slip-btn { background: var(--warn) !important; border-color: var(--warn) !important; color: #fff !important; font-size: 13px; font-weight: 600; min-height: 34px; padding: 6px 18px; border-radius: 99px; }
   #checkinNowBtn.done { background: var(--accent-soft) !important; color: var(--accent) !important; border: 2px solid var(--accent) !important; box-shadow: none; font-weight: 700; }
+  .quote-src { margin-top: 6px; font-size: 13px; color: var(--muted); }
   .tip-day { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--gold-soft); }
   .tip-day p { margin: 4px 0 0; }
   .tips { margin: 0 0 14px; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 8px; }
@@ -371,16 +372,16 @@
 <div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="i18n.js?v=2026.10.27-2"></script>
-<script src="articles.js?v=2026.10.27-2" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
-<script src="firebase-config.js?v=2026.10.27-2"></script>
+<script src="i18n.js?v=2026.10.27-3"></script>
+<script src="articles.js?v=2026.10.27-3" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
+<script src="firebase-config.js?v=2026.10.27-3"></script>
 <script>
 (function () {
   "use strict";
 
   /* ================= constants ================= */
   var KEY = "breakFree.app.v1";
-  var APP_VERSION = "2026.10.27-2"; /* bump when publishing; shown at the bottom of Profile */
+  var APP_VERSION = "2026.10.27-3"; /* bump when publishing; shown at the bottom of Profile */
   var FB_VER = "10.12.2";
   var EMO = {
     alcohol: "🍺", cigarettes: "🚬", weed: "🌿", drugs: "💉", pills: "💊", junkfood: "🍔", sweets: "🍬",
@@ -997,7 +998,7 @@
       (multi ? "<div class='dots' role='tablist'>" + S.habits.map(function (h, i) {
         return "<button class='dot" + (i === msIdx ? " on" : "") + "' data-dot='" + i + "' aria-label='" + esc(habitLabel(h)) + "'></button>"; }).join("") + "</div>" +
         "<div class='swipe-hint'>" + t("swipeHint") + "</div>" : "<div class='single-gap'></div>") +
-      "<div class='card'><h3>" + t("quoteTitle") + "</h3><div class='quote'>“" + esc(todaysQuote()) + "”</div>" +
+      "<div class='card'><h3>" + t("quoteTitle") + "</h3>" + quoteHtml() +
         "<div class='tip-day'><b>💡 " + t("tipOfDay") + "</b><p>" + esc(todaysTip()) + "</p></div></div>" +
       (S.share !== "self" ? "<div class='card'><h3>" + t("shareCardTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("shareCardSub") + "</p><div class='actions'><button class='primary' id='shareBtn'>" + t("shareBtn") + "</button></div></div>" : "") +
       "";
@@ -1125,6 +1126,15 @@
       "<div class='actions'><button id='tipsLearn'>" + t("tipsMore") + "</button><button class='primary' id='okBtn'>" + t("thanks") + "</button></div>");
     $("okBtn").addEventListener("click", closeModal);
     $("tipsLearn").addEventListener("click", function () { closeModal(); showTab("pLearn"); });
+  }
+  /* Hebrew users get an original Hebrew saying (with its source); English users the English quotes */
+  function quoteHtml() {
+    var sy = L().sayings, n = Math.floor(Date.now() / 864e5);
+    if (sy && sy.length) {
+      var q = sy[n % sy.length];
+      return "<div class='quote'>“" + esc(q.q) + "”</div><div class='quote-src'>— " + esc(q.src) + "</div>";
+    }
+    return "<div class='quote'>“" + esc(todaysQuote()) + "”</div>";
   }
   function todaysQuote() {
     var d = new Date(), n = Math.floor(new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() / 864e5);

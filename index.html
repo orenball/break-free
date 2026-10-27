@@ -172,6 +172,14 @@
   .tip-day { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--gold-soft); }
   .tip-day p { margin: 4px 0 0; }
   .tips { margin: 0 0 14px; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 8px; }
+  .hc-days { margin-top: 14px; }
+  .hc-days-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .hc-days-head span:last-child { color: var(--muted); font-weight: 400; }
+  .day.pre { opacity: 0.35; }
+  .hc-days .days { gap: 4px; }
+  .hc-days .day { padding: 3px 0 4px; font-size: 10px; line-height: 1.15; border-radius: 8px; }
+  .hc-days .day b { font-size: 14px; line-height: 1.2; }
+  .hc-days .day small { display: none; }
   button.day { display: block; width: 100%; min-height: 0; padding: 6px 2px; border: none; font-size: 12px; color: var(--text); }
   .moods { display: flex; justify-content: center; gap: 6px; margin: 6px 0 2px; }
   .moods button { font-size: 26px; min-height: 48px; padding: 6px 8px; background: transparent; border-color: transparent; }
@@ -363,16 +371,16 @@
 <div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="i18n.js?v=2026.10.27-1"></script>
-<script src="articles.js?v=2026.10.27-1" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
-<script src="firebase-config.js?v=2026.10.27-1"></script>
+<script src="i18n.js?v=2026.10.27-2"></script>
+<script src="articles.js?v=2026.10.27-2" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
+<script src="firebase-config.js?v=2026.10.27-2"></script>
 <script>
 (function () {
   "use strict";
 
   /* ================= constants ================= */
   var KEY = "breakFree.app.v1";
-  var APP_VERSION = "2026.10.27-1"; /* bump when publishing; shown at the bottom of Profile */
+  var APP_VERSION = "2026.10.27-2"; /* bump when publishing; shown at the bottom of Profile */
   var FB_VER = "10.12.2";
   var EMO = {
     alcohol: "🍺", cigarettes: "🚬", weed: "🌿", drugs: "💉", pills: "💊", junkfood: "🍔", sweets: "🍬",
@@ -427,7 +435,7 @@
   }
   function newHabit(key) {
     return { key: key, other: "", startDate: todayStr(), startTime: nowTimeStr(), amount: "", amount2: "", freqChoice: "", cost: "",
-      streakStart: null, bestMs: 0, restarts: 0, saidNo: null, firstStart: null, slips: [] };
+      streakStart: null, bestMs: 0, restarts: 0, saidNo: null, firstStart: null, slips: [], marks: {} };
   }
   /* Older versions kept a single habit at the top level: move it into S.habits. */
   function migrate(s) {
@@ -981,6 +989,8 @@
           "<div class='stats' id='stats" + i + "'></div>" +
           chartHtml(h, i) +
           "<div class='ms-strip' id='ms" + i + "'></div>" +
+          "<div class='hc-days'><div class='hc-days-head'><span>" + t("daysTitle") + "</span><span id='dcount" + i + "'></span></div><div class='days' id='days" + i + "'></div>" +
+          "<p class='small muted' style='margin:8px 0 0'>" + t("daysLegend") + "</p></div>" +
           "<div class='actions' style='margin-top:12px'><button data-tips='" + i + "'>" + t("tipsBtn") + "</button><button data-sayno='" + i + "'></button></div>" +
           (hasStarted(h) ? "<div class='slip-wrap'><button class='slip-btn' data-slip='" + i + "'>" + t("slipBtn") + "</button></div>" : "") + "</div>";
       }).join("") + "</div>" +
@@ -990,8 +1000,7 @@
       "<div class='card'><h3>" + t("quoteTitle") + "</h3><div class='quote'>“" + esc(todaysQuote()) + "”</div>" +
         "<div class='tip-day'><b>💡 " + t("tipOfDay") + "</b><p>" + esc(todaysTip()) + "</p></div></div>" +
       (S.share !== "self" ? "<div class='card'><h3>" + t("shareCardTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("shareCardSub") + "</p><div class='actions'><button class='primary' id='shareBtn'>" + t("shareBtn") + "</button></div></div>" : "") +
-      "<div class='card'><h3>" + t("daysTitle") + "</h3><div class='days' id='days'></div><p class='small muted' style='margin:10px 0'>" + t("daysLegend") + "</p>" +
-        "<div class='stats' style='grid-template-columns:1fr'>" + stat(checkinsYes(), t("cleanCheckins")) + "</div></div>";
+      "";
     $("checkinNowBtn").addEventListener("click", function () { if (startedIdx().length) openCheckin(); else toast(t("notStartedToast")); });
     var ans = S.checkins[todayStr()];
     $("checkinNowBtn").classList.toggle("pulse", !ans);
@@ -1013,7 +1022,7 @@
     bindCharts();
     if ($("shareBtn")) $("shareBtn").addEventListener("click", shareProgress);
     tick(); renderStats(); renderBadges(); renderDays();
-    if (S.lastPrompt === todayStr() && !S.checkins[todayStr()]) $("checkinBanner").classList.remove("hidden");
+    if (S.lastPrompt === todayStr() && !S.checkins[todayStr()] && startedIdx().length) $("checkinBanner").classList.remove("hidden");
     checkReminder();
   }
   /* ---------- streak chart: the streak's length at the end of each of the last 30 days ---------- */
@@ -1200,31 +1209,52 @@
       el.textContent = f.next.id === "sayno" ? "⭐ " + label : "⭐ " + label + " · " + t("msToGo", { t: countdownText(favTarget(f.next, h) - Date.now()) });
     });
   }
+  /* One habit's day: "pre" (before it started), "no" (slipped on it, or marked so),
+     "yes" (the day was answered and this habit wasn't the one that slipped, or marked clean), "none". */
+  function dayStatus(h, k) {
+    var from = new Date(k + "T00:00").getTime(), to = from + 864e5 - 1;
+    if (!h.firstStart || to < h.firstStart) return "pre";
+    if (h.marks && h.marks[k]) return h.marks[k];
+    if ((h.slips || []).some(function (x) { return x >= from && x <= to; })) return "no";
+    if (S.checkins[k]) return "yes";
+    return "none";
+  }
   function renderDays() {
-    if (!$("days")) return;
-    var html = "", today = todayStr();
-    for (var i = 29; i >= 0; i--) {
-      var d = new Date(); d.setDate(d.getDate() - i);
-      var k = dateKey(d), v = S.checkins[k];
-      html += "<button class='day" + (v === "yes" ? " yes" : v === "no" ? " no" : "") + (k === today ? " today" : "") + "' data-day='" + k + "' aria-label='" +
-        esc(d.toLocaleDateString(L().locale, { weekday: "long", day: "numeric", month: "long" })) + "'>" +
-        d.toLocaleDateString(L().locale, { weekday: "narrow" }) + "<b>" + (v === "yes" ? "✓" : v === "no" ? "✗" : "·") + "</b>" + d.getDate() +
-        "<small>" + (S.journal[k] && S.journal[k].mood ? MOODS[S.journal[k].mood - 1] : "") + "</small></button>";
-    }
-    $("days").innerHTML = html;
-    $("days").querySelectorAll("[data-day]").forEach(function (b) {
-      b.addEventListener("click", function () { if (b.dataset.day === todayStr()) openCheckin(); else openDay(b.dataset.day); });
+    var today = todayStr();
+    S.habits.forEach(function (h, hi) {
+      var box = $("days" + hi); if (!box) return;
+      var html = "", clean = 0, counted = 0;
+      for (var i = 29; i >= 0; i--) {
+        var d = new Date(); d.setDate(d.getDate() - i);
+        var k = dateKey(d), v = dayStatus(h, k);
+        if (v !== "pre") counted++;
+        if (v === "yes") clean++;
+        html += "<button class='day" + (v === "yes" ? " yes" : v === "no" ? " no" : v === "pre" ? " pre" : "") + (k === today ? " today" : "") + "' data-day='" + k + "' data-h='" + hi + "'" + (v === "pre" ? " disabled" : "") +
+          " aria-label='" + esc(d.toLocaleDateString(L().locale, { weekday: "long", day: "numeric", month: "long" })) + "'>" +
+          d.toLocaleDateString(L().locale, { weekday: "narrow" }) + "<b>" + (v === "yes" ? "✓" : v === "no" ? "✗" : v === "pre" ? "–" : "·") + "</b>" + d.getDate() +
+          "<small>" + (v !== "pre" && S.journal[k] && S.journal[k].mood ? MOODS[S.journal[k].mood - 1] : "") + "</small></button>";
+      }
+      box.innerHTML = html;
+      $("dcount" + hi).textContent = counted ? t("cleanOf", { n: clean, total: counted }) : "";
+      box.querySelectorAll("[data-day]").forEach(function (b) {
+        b.addEventListener("click", function () { if (b.dataset.day === todayStr()) openCheckin(); else openDay(b.dataset.day, +b.dataset.h); });
+      });
     });
   }
-  /* mark a past day that was missed (only the calendar; timers are changed with "I slipped") */
-  function openDay(k) {
+  /* mark a past day for one habit (the calendar only; timers change with "I slipped") */
+  function openDay(k, hi) {
+    var h = S.habits[hi], cur = dayStatus(h, k);
     var label = new Date(k + "T12:00").toLocaleDateString(L().locale, { weekday: "long", day: "numeric", month: "long" });
-    openModal("<div class='big'>📅</div><h2>" + esc(t("dayTitle", { date: label })) + "</h2><p class='c'>" + t("dayQ") + "</p>" +
-      "<div class='opts'><button class='opt" + (S.checkins[k] === "yes" ? " selected" : "") + "' id='dYes'>" + t("dayYes") + "</button>" +
-      "<button class='opt" + (S.checkins[k] === "no" ? " selected" : "") + "' id='dNo'>" + t("dayNo") + "</button></div>" +
+    openModal("<div class='big'>📅</div><h2>" + esc(label) + "</h2><p class='c'>" + esc(t("dayQFor", { habit: habitNameOf(h) })) + "</p>" +
+      "<div class='opts'><button class='opt" + (cur === "yes" ? " selected" : "") + "' id='dYes'>" + t("dayYes") + "</button>" +
+      "<button class='opt" + (cur === "no" ? " selected" : "") + "' id='dNo'>" + t("dayNo") + "</button></div>" +
       "<p class='small muted'>" + t("dayNoNote") + "</p>" +
-      "<div class='actions'>" + (S.checkins[k] ? "<button class='ghost' id='dClear'>" + t("dayClear") + "</button>" : "") + "<button id='dCancel'>" + t("cancel") + "</button></div>");
-    function setDay(v) { if (v) S.checkins[k] = v; else delete S.checkins[k]; save(); closeModal(); if (currentTab === "pHome") renderHome(); toast(t("saved")); }
+      "<div class='actions'>" + (h.marks && h.marks[k] ? "<button class='ghost' id='dClear'>" + t("dayClear") + "</button>" : "") + "<button id='dCancel'>" + t("cancel") + "</button></div>");
+    function setDay(v) {
+      h.marks = h.marks || {};
+      if (v) h.marks[k] = v; else delete h.marks[k];
+      save(); closeModal(); if (currentTab === "pHome") renderHome(); toast(t("saved"));
+    }
     $("dYes").addEventListener("click", function () { setDay("yes"); });
     $("dNo").addEventListener("click", function () { setDay("no"); });
     if ($("dClear")) $("dClear").addEventListener("click", function () { setDay(null); });
@@ -1256,6 +1286,7 @@
     $("okBtn").addEventListener("click", closeModal);
   }
   function openCheckin() {
+    if (!startedIdx().length) { toast(t("notStartedToast")); return; }
     openModal("<div class='big'>📝</div><h2>" + t("ciTitle") + "</h2>" +
       "<p class='c'><b>" + esc(t("ciQ", { habit: startedNames() })) + "</b></p>" +
       "<p class='c small muted' style='margin:12px 0 0'>" + t("moodQ") + "</p><div class='moods' role='group' aria-label='" + esc(t("moodQ")) + "'>" +
@@ -1292,7 +1323,7 @@
     });
     $("ciLater").addEventListener("click", function () {
       closeModal();
-      if (!S.checkins[todayStr()] && $("checkinBanner")) $("checkinBanner").classList.remove("hidden");
+      if (!S.checkins[todayStr()] && startedIdx().length && $("checkinBanner")) $("checkinBanner").classList.remove("hidden");
     });
   }
   /* "No" with several habits: ask which ones, and restart only those timers */

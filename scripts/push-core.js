@@ -55,6 +55,8 @@ export function pushDecision(u, now) {
   if (!u.notify || !u.fcmToken) return { push: false, reason: "reminders off" };
   const times = reminderTimes(u);
   if (!times.length) return { push: false, reason: "no reminder time" };
+  const starts = (Array.isArray(u.streaks) && u.streaks.length ? u.streaks.map((x) => x.streakStart) : [u.streakStart]).filter((x) => typeof x === "number");
+  if (starts.length && starts.every((x) => x > now)) return { push: false, reason: "journey hasn't started yet" };
   const { date, time } = localParts(now, u.tz);
   if (u.lastCheckinDate === date) return { push: false, reason: "already checked in today", localDate: date };
   const sent = { ...(u.lastPushes || {}) };

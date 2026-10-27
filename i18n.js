@@ -137,6 +137,9 @@ window.BF_I18N = {
 
       profPageTitle: "Profile & settings", save: "Save", saved: "Saved ✓",
       language: "Language", currency: "Currency",
+      editStart: "📅 Start date", editStartTitle: "{habit}: when did you start?", startSaved: "Start date updated ✓",
+      editStartNote: "The timer counts from this date. Slips recorded before it are removed.",
+      notStartedBtn: "⏳ Your journey starts in {t}", notStartedToast: "You can mark days once your journey has started.",
       editPrice: "Edit price", editPriceTitle: "{habit}: how much it costs", pricePerDay: "{p} a day", noPrice: "no price set",
       priceNote: "Money saved is recalculated with the new price.", priceSaved: "Price updated ✓",
       fbTitle: "💬 Ideas for the app", fbSub: "Something missing, confusing or broken? Tell us — your message is sent without your name.",
@@ -407,6 +410,9 @@ window.BF_I18N = {
 
       profPageTitle: "פרופיל והגדרות", save: "שמירה", saved: "נשמר ✓",
       language: "שפה", currency: "מטבע",
+      editStart: "📅 תאריך התחלה", editStartTitle: "{habit}: מתי [[התחלת|התחלת]]?", startSaved: "תאריך ההתחלה עודכן ✓",
+      editStartNote: "הטיימר יספור מהתאריך הזה. פעמים [[שנשברת|שנשברת]] לפניו יימחקו.",
+      notStartedBtn: "⏳ המסע שלך מתחיל בעוד {t}", notStartedToast: "אפשר לסמן ימים אחרי שהמסע מתחיל.",
       editPrice: "עריכת מחיר", editPriceTitle: "{habit}: כמה זה עולה", pricePerDay: "{p} ליום", noPrice: "לא הוגדר מחיר",
       priceNote: "הכסף שנחסך יחושב מחדש לפי המחיר החדש.", priceSaved: "המחיר עודכן ✓",
       fbTitle: "💬 רעיונות לאפליקציה", fbSub: "משהו חסר, מבלבל או לא עובד? [[ספר|ספרי]] לנו — ההודעה נשלחת בלי השם שלך.",

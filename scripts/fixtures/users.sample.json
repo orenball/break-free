@@ -196,5 +196,29 @@
       "12:00": "2026-10-19"
     },
     "updatedAt": 1792430000000
+  },
+  {
+    "_label": "Starts next week (no reminders yet)",
+    "lang": "he",
+    "habit": "coffee",
+    "habits": [
+      "coffee"
+    ],
+    "streaks": [
+      {
+        "habit": "coffee",
+        "streakStart": 1793000000000,
+        "bestMs": 0
+      }
+    ],
+    "reminderTimes": [
+      "20:00"
+    ],
+    "tz": "Asia/Jerusalem",
+    "notify": true,
+    "fcmToken": "test-token-11",
+    "checkinsYes": 0,
+    "lastCheckinDate": null,
+    "updatedAt": 1792430000000
   }
 ]

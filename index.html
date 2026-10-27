@@ -167,8 +167,7 @@
   .chart .cross { stroke: var(--muted); stroke-width: 1; }
   .chart .hit { fill: transparent; cursor: crosshair; }
   .slip-wrap { text-align: center; margin-top: 8px; }
-  .slip-link { background: none !important; border: none !important; min-height: 36px; padding: 6px 12px; font-size: 13px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
-  .slip-link:hover { color: var(--warn); }
+  .slip-btn { background: var(--warn) !important; border-color: var(--warn) !important; color: #fff !important; font-size: 13px; font-weight: 600; min-height: 34px; padding: 6px 18px; border-radius: 99px; }
   #checkinNowBtn.done { background: var(--accent-soft) !important; color: var(--accent) !important; border: 2px solid var(--accent) !important; box-shadow: none; font-weight: 700; }
   .tip-day { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--gold-soft); }
   .tip-day p { margin: 4px 0 0; }
@@ -364,16 +363,16 @@
 <div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="i18n.js?v=2026.10.25-3"></script>
-<script src="articles.js?v=2026.10.25-3" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
-<script src="firebase-config.js?v=2026.10.25-3"></script>
+<script src="i18n.js?v=2026.10.27-1"></script>
+<script src="articles.js?v=2026.10.27-1" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
+<script src="firebase-config.js?v=2026.10.27-1"></script>
 <script>
 (function () {
   "use strict";
 
   /* ================= constants ================= */
   var KEY = "breakFree.app.v1";
-  var APP_VERSION = "2026.10.25-3"; /* bump when publishing; shown at the bottom of Profile */
+  var APP_VERSION = "2026.10.27-1"; /* bump when publishing; shown at the bottom of Profile */
   var FB_VER = "10.12.2";
   var EMO = {
     alcohol: "🍺", cigarettes: "🚬", weed: "🌿", drugs: "💉", pills: "💊", junkfood: "🍔", sweets: "🍬",
@@ -506,6 +505,9 @@
     return x.short || (S.lang === "he" ? x.label : x.label.toLowerCase());
   }
   function habitNames() { return joinNice(S.habits.map(habitNameOf)); }
+  function hasStarted(h) { return !!h.streakStart && Date.now() >= h.streakStart; }
+  function startedIdx() { return S.habits.map(function (h, i) { return hasStarted(h) ? i : -1; }).filter(function (i) { return i >= 0; }); }
+  function startedNames() { return joinNice(startedIdx().map(function (i) { return habitNameOf(S.habits[i]); })); }
   function goalLabels() {
     var list = S.goals.map(function (id) { var g = L().goals[id]; return g ? (S.lang === "he" ? g.label : g.label.toLowerCase()) : id; });
     if (S.goalOther.trim()) list.push(S.goalOther.trim());
@@ -936,7 +938,7 @@
     if (!S.setupDone) { $("setup").classList.remove("hidden"); renderStep(); return; }
     $("app").classList.remove("hidden"); $("tabbar").classList.remove("hidden");
     showTab(currentTab);
-    if (hash === "#checkin") { history.replaceState(null, "", location.pathname + location.search); showTab("pHome"); openCheckin(); }
+    if (hash === "#checkin") { history.replaceState(null, "", location.pathname + location.search); showTab("pHome"); if (startedIdx().length) openCheckin(); }
     if (hash === "#why") { history.replaceState(null, "", location.pathname + location.search); showTab("pWhy"); }
   }
   window.addEventListener("hashchange", route);
@@ -980,7 +982,7 @@
           chartHtml(h, i) +
           "<div class='ms-strip' id='ms" + i + "'></div>" +
           "<div class='actions' style='margin-top:12px'><button data-tips='" + i + "'>" + t("tipsBtn") + "</button><button data-sayno='" + i + "'></button></div>" +
-          "<div class='slip-wrap'><button class='slip-link' data-slip='" + i + "'>" + t("slipBtn") + "</button></div></div>";
+          (hasStarted(h) ? "<div class='slip-wrap'><button class='slip-btn' data-slip='" + i + "'>" + t("slipBtn") + "</button></div>" : "") + "</div>";
       }).join("") + "</div>" +
       (multi ? "<div class='dots' role='tablist'>" + S.habits.map(function (h, i) {
         return "<button class='dot" + (i === msIdx ? " on" : "") + "' data-dot='" + i + "' aria-label='" + esc(habitLabel(h)) + "'></button>"; }).join("") + "</div>" +
@@ -990,12 +992,17 @@
       (S.share !== "self" ? "<div class='card'><h3>" + t("shareCardTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("shareCardSub") + "</p><div class='actions'><button class='primary' id='shareBtn'>" + t("shareBtn") + "</button></div></div>" : "") +
       "<div class='card'><h3>" + t("daysTitle") + "</h3><div class='days' id='days'></div><p class='small muted' style='margin:10px 0'>" + t("daysLegend") + "</p>" +
         "<div class='stats' style='grid-template-columns:1fr'>" + stat(checkinsYes(), t("cleanCheckins")) + "</div></div>";
-    $("checkinNowBtn").addEventListener("click", openCheckin);
+    $("checkinNowBtn").addEventListener("click", function () { if (startedIdx().length) openCheckin(); else toast(t("notStartedToast")); });
     var ans = S.checkins[todayStr()];
     $("checkinNowBtn").classList.toggle("pulse", !ans);
     $("checkinNowBtn").classList.toggle("done", !!ans);
     $("checkinNowBtn").classList.toggle("primary", !ans);
     if (ans) $("checkinNowBtn").textContent = ans === "yes" ? t("checkinDone") : t("checkinDoneNo");
+    if (!startedIdx().length) {
+      var first = Math.min.apply(null, S.habits.map(function (h) { return h.streakStart || Infinity; }));
+      $("checkinNowBtn").classList.remove("pulse");
+      $("checkinNowBtn").textContent = t("notStartedBtn", { t: countdownText(first - Date.now()) });
+    }
     $("openCheckinBtn").addEventListener("click", openCheckin);
     p.querySelectorAll("[data-slip]").forEach(function (b) { b.addEventListener("click", function () { askSlip(+b.dataset.slip); }); });
     p.querySelectorAll("[data-tips]").forEach(function (b) { b.addEventListener("click", function () { openTips(+b.dataset.tips); }); });
@@ -1250,7 +1257,7 @@
   }
   function openCheckin() {
     openModal("<div class='big'>📝</div><h2>" + t("ciTitle") + "</h2>" +
-      "<p class='c'><b>" + esc(t("ciQ", { habit: habitNames() })) + "</b></p>" +
+      "<p class='c'><b>" + esc(t("ciQ", { habit: startedNames() })) + "</b></p>" +
       "<p class='c small muted' style='margin:12px 0 0'>" + t("moodQ") + "</p><div class='moods' role='group' aria-label='" + esc(t("moodQ")) + "'>" +
         MOODS.map(function (m, i) { return "<button data-mood='" + (i + 1) + "' aria-pressed='false' aria-label='" + esc(L().moods[i]) + "' title='" + esc(L().moods[i]) + "'>" + m + "</button>"; }).join("") + "</div>" +
       "<label class='field' for='ciNote'>" + t("noteLabel") + " <span class='muted'>" + t("optional") + "</span></label>" +
@@ -1279,7 +1286,8 @@
     });
     $("ciNo").addEventListener("click", function () {
       keepJournal(); save();
-      if (S.habits.length === 1) { S.checkins[todayStr()] = "no"; S.lastPrompt = todayStr(); relapse([0]); }
+      var live = startedIdx();
+      if (live.length <= 1) { S.checkins[todayStr()] = "no"; S.lastPrompt = todayStr(); if (live.length) relapse(live); else closeModal(); }
       else askWhichSlipped();
     });
     $("ciLater").addEventListener("click", function () {
@@ -1291,7 +1299,7 @@
   function askWhichSlipped() {
     var picked = [];
     openModal("<div class='big'>🫂</div><h2>" + t("ciWhich") + "</h2><p class='c'>" + t("ciWhichSub") + "</p><div class='opts'>" +
-      S.habits.map(function (h, i) { return "<button class='opt' data-which='" + i + "' aria-pressed='false'>" + EMO[h.key] + " " + esc(habitLabel(h)) + "</button>"; }).join("") +
+      startedIdx().map(function (i) { var h = S.habits[i]; return "<button class='opt' data-which='" + i + "' aria-pressed='false'>" + EMO[h.key] + " " + esc(habitLabel(h)) + "</button>"; }).join("") +
       "</div><div class='error' id='whichErr' role='alert'></div><div class='actions'><button id='whichBack'>" + t("back") + "</button><button class='danger' id='whichOk'>" + t("ciWhichBtn") + "</button></div>");
     $("modal").querySelectorAll("[data-which]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -1315,7 +1323,7 @@
   function checkReminder() {
     if (!S.setupDone) return;
     var today = todayStr();
-    if (S.lastPrompt === today || Date.now() < reminderTsFor(new Date())) return;
+    if (S.lastPrompt === today || Date.now() < reminderTsFor(new Date()) || !startedIdx().length) return;
     S.lastPrompt = today; save();
     if (S.checkins[today]) return;
     if (currentTab !== "pHome") showTab("pHome");
@@ -1496,6 +1504,7 @@
         .catch(function () { $("fbErr").textContent = t("fbError"); })
         .then(function () { $("fbSend").disabled = false; });
     });
+    $("pProfile").querySelectorAll("[data-eds]").forEach(function (b) { b.addEventListener("click", function () { openEditStart(+b.dataset.eds); }); });
     $("pProfile").querySelectorAll("[data-edp]").forEach(function (b) { b.addEventListener("click", function () { openEditPrice(+b.dataset.edp); }); });
     $("pProfile").querySelectorAll("[data-rmh]").forEach(function (b) { b.addEventListener("click", function () { askRemoveHabit(+b.dataset.rmh); }); });
     if ($("addHabitBtn")) $("addHabitBtn").addEventListener("click", function () { openAddHabit(null); });
@@ -1525,7 +1534,7 @@
       var m = HABIT_META[h.key] || {}, price = m.money ? h.amount : h.cost;
       var details = [since ? t("sinceDate", { date: since }) : ""].concat(m.costly || m.money ? [price !== "" && price != null ? t("pricePerDay", { p: S.currency + price }) : t("noPrice")] : []).filter(Boolean).join(" · ");
       return "<div class='habit-row'><span class='hr-info'><b>" + EMO[h.key] + " " + esc(habitLabel(h)) + "</b><small>" + esc(details) + "</small></span>" +
-        "<span class='row-btns'>" + (m.costly || m.money ? "<button class='ghost' data-edp='" + i + "'>" + t("editPrice") + "</button>" : "") +
+        "<span class='row-btns'><button class='ghost' data-eds='" + i + "'>" + t("editStart") + "</button>" + (m.costly || m.money ? "<button class='ghost' data-edp='" + i + "'>" + t("editPrice") + "</button>" : "") +
         (S.habits.length > 1 ? "<button class='ghost' data-rmh='" + i + "'>" + t("remove") + "</button>" : "") + "</span></div>";
     }).join("") + "</div>" +
       (S.habits.length === 1 ? "<p class='small muted'>" + t("keepOneHabit") + "</p>" : "") +
@@ -1572,6 +1581,27 @@
     });
   }
   /* change what a habit costs a week (for betting: how much was bet a week) */
+  /* change when a habit's journey started; slips from before the new date are dropped */
+  function openEditStart(i) {
+    var h = S.habits[i], d = new Date(h.firstStart || h.streakStart || Date.now());
+    openModal("<div class='big'>📅</div><h2>" + esc(t("editStartTitle", { habit: habitLabel(h) })) + "</h2>" +
+      "<div class='row'><div><label class='field' for='esDate'>" + t("startDate") + "</label><input type='date' id='esDate' value='" + dateKey(d) + "'></div>" +
+      "<div><label class='field' for='esTime'>" + t("startTime") + "</label><input type='time' id='esTime' value='" + pad(d.getHours()) + ":" + pad(d.getMinutes()) + "'></div></div>" +
+      "<p class='small muted'>" + t("editStartNote") + "</p>" +
+      "<div class='error' id='esErr' role='alert'></div><div class='actions'><button id='esCancel'>" + t("cancel") + "</button><button class='primary' id='esSave'>" + t("save") + "</button></div>");
+    $("esCancel").addEventListener("click", closeModal);
+    $("esSave").addEventListener("click", function () {
+      var dv = $("esDate").value, tv = $("esTime").value || "00:00";
+      if (!dv) { $("esErr").textContent = t("errDate"); return; }
+      h.startDate = dv; h.startTime = tv;
+      var start = startTs(h);
+      h.slips = (h.slips || []).filter(function (x) { return x > start; });
+      h.restarts = h.slips.length;
+      h.firstStart = start;
+      h.streakStart = h.slips.length ? h.slips[h.slips.length - 1] : start;
+      save(); closeModal(); renderProfile(); toast(t("startSaved"));
+    });
+  }
   function openEditPrice(i) {
     var h = S.habits[i], m = HABIT_META[h.key] || {}, cur = m.money ? h.amount : h.cost;
     openModal("<div class='big'>₪</div><h2>" + esc(t("editPriceTitle", { habit: habitLabel(h) })) + "</h2>" +
@@ -1637,7 +1667,7 @@
       .catch(function () { FB.ready = false; });
   }
   function checkReminderForce() {
-    if (!S.setupDone || S.checkins[todayStr()]) return;
+    if (!S.setupDone || S.checkins[todayStr()] || !startedIdx().length) return;
     showTab("pHome"); openCheckin();
   }
   var syncTimer = null;

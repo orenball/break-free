@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Break Free">
 <style>
@@ -20,6 +20,8 @@
     --bg: #f1f7f3; --panel: #ffffff; --panel-2: #edf4f0; --text: #15241e; --muted: #5a6d65;
     --border: #d6e3dc; --accent: #0f9d6b; --accent-2: #13b37c; --accent-soft: #d9f3e7; --accent-text: #ffffff;
     --grad: linear-gradient(135deg, #0f9d6b 0%, #14b8a6 100%); --grad-text: #ffffff; --glow: rgba(15, 157, 107, 0.32);
+    --c0: #0f9d6b; --c1: #4f46e5; --c2: #d97706;   /* habit card colours: green, indigo, amber */
+    --ink: linear-gradient(135deg, #16233f 0%, #283b6b 100%); --ink-glow: rgba(22, 35, 63, 0.28);   /* deep navy for the why card */
     --warn: #c9463f; --warn-soft: #fbe6e5; --gold: #c98f12; --gold-soft: #fbf0d5;
     --shadow: 0 6px 20px rgba(20, 40, 30, 0.10); --overlay: rgba(10, 20, 15, 0.55);
     --nav-h: 64px;
@@ -29,6 +31,8 @@
       --bg: #101613; --panel: #19221e; --panel-2: #212c27; --text: #e6efea; --muted: #94a59d;
       --border: #2a3832; --accent: #34d399; --accent-2: #6ee7b7; --accent-soft: #163a2c; --accent-text: #0b1a13;
       --grad: linear-gradient(135deg, #059669 0%, #0d9488 100%); --grad-text: #ffffff; --glow: rgba(52, 211, 153, 0.28);
+      --c0: #10b981; --c1: #6366f1; --c2: #f59e0b;
+      --ink: linear-gradient(135deg, #1d2a4d 0%, #2f437a 100%); --ink-glow: rgba(0, 0, 0, 0.35);
       --warn: #ef6f6a; --warn-soft: #3a2120; --gold: #f0bf4c; --gold-soft: #3a3020;
       --shadow: 0 6px 20px rgba(0, 0, 0, 0.4); --overlay: rgba(0, 0, 0, 0.65);
       color-scheme: dark;
@@ -175,6 +179,32 @@
   .tip-day p { margin: 4px 0 0; }
   .tips { margin: 0 0 14px; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 8px; }
   .hc-days { margin-top: 14px; }
+  .welcome { text-align: center; }
+  .welcome .logo-big { width: 72px; height: 72px; border-radius: 20px; box-shadow: 0 10px 28px var(--glow); margin: 6px 0 14px; }
+  .wel-list { list-style: none; padding: 0; margin: 6px 0 14px; display: flex; flex-direction: column; gap: 10px; text-align: start; }
+  .wel-list li { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border-radius: 14px; padding: 12px 14px; }
+  .wel-list .ic { color: var(--accent); width: 22px; height: 22px; }
+  .plan-card { border: 2px solid var(--accent-soft); }
+  /* bold habit cards: a solid coloured header, numbers and chart in the same colour */
+  .card.slide { --hc: var(--c0); --hc-soft: color-mix(in srgb, var(--hc) 13%, var(--panel)); padding-top: 0 !important; overflow: hidden; }
+  .slide.hc1, .dot.hc1 { --hc: var(--c1); }
+  .slide.hc2, .dot.hc2 { --hc: var(--c2); }
+  .slide .hc-head { background: var(--hc); color: #fff; margin: 0 -20px 14px; padding: 14px 20px; }
+  .slide .hc-head h3 { color: #fff; }
+  .slide .hc-head .emo { background: rgba(255, 255, 255, 0.22); border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; }
+  .slide .timer div { background: var(--hc-soft); }
+  .slide .timer b { color: var(--hc); }
+  .slide .chart .line { stroke: var(--hc); }
+  .slide .chart .area { fill: var(--hc-soft); }
+  .slide .chart .enddot { fill: var(--hc); }
+  .slide details.more > summary { color: var(--hc); }
+  .dot.on { background: var(--hc, var(--accent)); }
+  @media (max-width: 420px) { .slide .hc-head { margin: 0 -16px 12px; padding: 12px 16px; } }
+  details.more { margin-top: 12px; border-top: 1px solid var(--border); }
+  details.more > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 0 2px; font-size: 14px; font-weight: 600; color: var(--accent); }
+  details.more > summary::-webkit-details-marker { display: none; }
+  details.more > summary .chev { transition: transform 0.2s ease; }
+  details.more[open] > summary .chev { transform: rotate(180deg); }
   .hc-days-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
   .hc-days-head span:last-child { color: var(--muted); font-weight: 400; }
   .day.pre { opacity: 0.35; }
@@ -277,7 +307,7 @@
   header.top h1 { font-size: 24px; font-weight: 800; }
   h2, h3 { font-weight: 700; }
   .card { border-radius: 22px; border-color: transparent; box-shadow: 0 8px 24px rgba(15, 60, 40, 0.08); }
-  .why-card, .why-big { background: var(--grad); color: var(--grad-text); font-style: normal; font-weight: 500; box-shadow: 0 10px 28px var(--glow); }
+  .why-card, .why-big { background: var(--ink); color: #fff; font-style: normal; font-weight: 500; box-shadow: 0 10px 28px var(--ink-glow); }
   .why-card .eyebrow, .why-big .eyebrow { color: rgba(255, 255, 255, 0.85); }
   .primary { background: var(--grad) !important; border-color: transparent !important; color: var(--grad-text) !important; font-weight: 700; }
   #checkinNowBtn { min-height: 56px; font-size: 17px; border-radius: 18px; box-shadow: 0 8px 20px var(--glow); }
@@ -303,6 +333,18 @@
     #checkinNowBtn.pulse, .page.enter { animation: none; }
     button, a.btn, .tab .ico { transition: none; }
   }
+  /* ---------- icons + logo ---------- */
+  .ic { width: 20px; height: 20px; flex: 0 0 auto; vertical-align: -4px; }
+  .tab .ico .ic { width: 23px; height: 23px; }
+  .big-ic { width: 60px; height: 60px; margin: 0 auto 8px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; }
+  .big-ic .ic { width: 30px; height: 30px; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand .logo { width: 34px; height: 34px; flex: 0 0 auto; border-radius: 10px; box-shadow: 0 4px 12px var(--glow); }
+  .art-ic { width: 40px; height: 40px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; }
+  .note.hint { display: flex; gap: 8px; align-items: flex-start; }
+  .note.hint .ic { color: var(--gold); margin-top: 2px; }
+  .tip-day b .ic, h3 .ic { color: var(--accent); }
+  .notif-on .ic { color: var(--accent); }
   .hidden { display: none !important; }
   @media (max-width: 420px) { .timer b { font-size: 26px; } .card { padding: 16px; } .why-big { font-size: 21px; } }
 </style>
@@ -310,7 +352,7 @@
 <body>
 <div class="wrap">
   <header class="top">
-    <h1>Break <span>Free</span></h1>
+    <h1 class="brand"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0f9d6b"/><stop offset="1" stop-color="#14b8a6"/></linearGradient></defs><rect width="40" height="40" rx="11" fill="url(#lg)"/><path d="M30 20A10 10 0 1 1 27.07 12.93" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round"/><circle cx="29.6" cy="10.4" r="2.7" fill="#f6c453"/></svg><span class="word">Break <span>Free</span></span></h1>
     <div class="greet" id="greet"></div>
   </header>
 
@@ -362,27 +404,27 @@
 
 <nav class="tabbar hidden" id="tabbar">
   <div class="tabbar-inner">
-    <button class="tab" data-tab="pHome"><span class="ico">🏠</span><span data-t="tabHome"></span></button>
-    <button class="tab" data-tab="pWhy"><span class="ico">💚</span><span data-t="tabWhy"></span></button>
-    <button class="tab" data-tab="pLearn"><span class="ico">📖</span><span data-t="tabLearn"></span></button>
-    <button class="tab" data-tab="pComm"><span class="ico">👥</span><span data-t="tabCommunity"></span></button>
-    <button class="tab" data-tab="pProfile"><span class="ico">👤</span><span data-t="tabProfile"></span></button>
+    <button class="tab" data-tab="pHome"><span class="ico"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></span><span data-t="tabHome"></span></button>
+    <button class="tab" data-tab="pWhy"><span class="ico"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg></span><span data-t="tabWhy"></span></button>
+    <button class="tab" data-tab="pLearn"><span class="ico"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span data-t="tabLearn"></span></button>
+    <button class="tab" data-tab="pComm"><span class="ico"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span data-t="tabCommunity"></span></button>
+    <button class="tab" data-tab="pProfile"><span class="ico"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span data-t="tabProfile"></span></button>
   </div>
 </nav>
 
 <div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="i18n.js?v=2026.10.29-1"></script>
-<script src="articles.js?v=2026.10.29-1" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
-<script src="firebase-config.js?v=2026.10.29-1"></script>
+<script src="i18n.js?v=2026.10.29-2"></script>
+<script src="articles.js?v=2026.10.29-2" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
+<script src="firebase-config.js?v=2026.10.29-2"></script>
 <script>
 (function () {
   "use strict";
 
   /* ================= constants ================= */
   var KEY = "breakFree.app.v1";
-  var APP_VERSION = "2026.10.29-1"; /* bump when publishing; shown at the bottom of Profile */
+  var APP_VERSION = "2026.10.29-2"; /* bump when publishing; shown at the bottom of Profile */
   var FB_VER = "10.12.2";
   var EMO = {
     alcohol: "🍺", cigarettes: "🚬", weed: "🌿", drugs: "💉", pills: "💊", junkfood: "🍔", sweets: "🍬",
@@ -399,6 +441,12 @@
   /* how-often answers, as times per day (used to estimate what was avoided) */
   var FREQ_PER_DAY = [1 / 7, 3 / 7, 1, 2.5, 5];
   function freqPerDay(h) { return h.freqChoice === "" ? 0 : (FREQ_PER_DAY[+h.freqChoice] || 0); }
+  /* line icons (paths from the Lucide icon set, ISC licence) */
+  var ICONS = {"home": "<path d=\"m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/><path d=\"M9 22V12h6v10\"/>", "heart": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\"/>", "book": "<path d=\"M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z\"/><path d=\"M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z\"/>", "users": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/>", "user": "<path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/>", "check": "<path d=\"M20 6 9 17l-5-5\"/>", "bulb": "<path d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\"/><path d=\"M9 18h6\"/><path d=\"M10 22h4\"/>", "share": "<circle cx=\"18\" cy=\"5\" r=\"3\"/><circle cx=\"6\" cy=\"12\" r=\"3\"/><circle cx=\"18\" cy=\"19\" r=\"3\"/><path d=\"m8.6 13.5 6.8 4\"/><path d=\"m15.4 6.5-6.8 4\"/>", "calendar": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"M16 2v4\"/><path d=\"M8 2v4\"/><path d=\"M3 10h18\"/>", "bell": "<path d=\"M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9\"/><path d=\"M10.3 21a1.94 1.94 0 0 0 3.4 0\"/>", "bellOff": "<path d=\"M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5\"/><path d=\"M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7\"/><path d=\"M10.3 21a1.94 1.94 0 0 0 3.4 0\"/><path d=\"m2 2 20 20\"/>", "message": "<path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/>", "pencil": "<path d=\"M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z\"/>", "trash": "<path d=\"M3 6h18\"/><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"/><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"/>", "plus": "<path d=\"M12 5v14\"/><path d=\"M5 12h14\"/>", "x": "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>", "ban": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m4.9 4.9 14.2 14.2\"/>", "chart": "<path d=\"M3 3v18h18\"/><path d=\"m19 9-5 5-4-4-3 3\"/>", "compass": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36z\"/>", "restart": "<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"/><path d=\"M3 3v5h5\"/>", "alert": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/>", "wave": "<path d=\"M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/><path d=\"M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/><path d=\"M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/>", "download": "<path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><path d=\"m7 10 5 5 5-5\"/><path d=\"M12 15V3\"/>", "send": "<path d=\"m22 2-7 20-4-9-9-4Z\"/><path d=\"M22 2 11 13\"/>", "chevron": "<path d=\"m6 9 6 6 6-6\"/>", "price": "<path d=\"M12 2v20\"/><path d=\"M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6\"/>"};
+  function ic(name, extra) {
+    return "<svg class='ic" + (extra ? " " + extra : "") + "' viewBox='0 0 24 24' aria-hidden='true' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>" + (ICONS[name] || "") + "</svg>";
+  }
+  function bigIc(name) { return "<div class='big-ic'>" + ic(name) + "</div>"; }
   var HABIT_ORDER = Object.keys(EMO);
   var GOAL_IDS = ["happiness", "discipline", "health", "money", "sleep", "time", "relationships", "confidence", "focus"];
   var BELIEF_IDS = ["yes", "think", "unsure", "scared"];
@@ -418,7 +466,7 @@
       lang: null, gender: null, setupDone: false,
       name: "", age: "", about: "",
       habits: [], currency: "₪",
-      goals: [], goalOther: "", improve: "", critical: 7, belief: null,
+      goals: [], goalOther: "", improve: "", critical: null, belief: null,
       share: null, shareName: "", milestones: [], milestoneOther: "",
       why: "", reminderTimes: ["20:00"], priceDaily: true,
       checkins: {}, journal: {}, lastPrompt: null,
@@ -426,7 +474,7 @@
     };
   }
   var S = load();
-  var step = 0, whyWarned = false, currentTab = "pHome", openArticle = null, msIdx = 0;
+  var step = 0, whyWarned = false, currentTab = "pHome", openArticle = null, msIdx = 0, moreOpen = {};
 
   function load() {
     try {
@@ -523,6 +571,7 @@
     if (S.goalOther.trim()) list.push(S.goalOther.trim());
     return list;
   }
+  function capFirst(x) { return x ? x.charAt(0).toUpperCase() + x.slice(1) : x; }
   function joinNice(list) {
     if (list.length <= 1) return list.join("");
     var and = L().plural.and;
@@ -748,10 +797,11 @@
     },
     { // critical
       render: function () {
-        return "<h2>" + t("critTitle") + "</h2><p class='sub'>" + t("critSub") + "</p><div class='range-val' id='critVal'>" + S.critical + "</div>" +
-          "<input type='range' id='crit' min='1' max='10' value='" + S.critical + "' aria-label='" + esc(t("critTitle")) + "'><div class='range-text' id='critText'>" + critText(S.critical) + "</div>";
+        return "<h2>" + t("critTitle") + "</h2><p class='sub'>" + t("critSub") + "</p><div class='range-val' id='critVal'>" + (S.critical || 7) + "</div>" +
+          "<input type='range' id='crit' min='1' max='10' value='" + (S.critical || 7) + "' aria-label='" + esc(t("critTitle")) + "'><div class='range-text' id='critText'>" + critText(S.critical || 7) + "</div>";
       },
       bind: function () {
+        if (S.critical == null) S.critical = 7;
         $("crit").addEventListener("input", function () { S.critical = +this.value; $("critVal").textContent = S.critical; $("critText").textContent = critText(S.critical); });
       },
       validate: function () {}
@@ -819,7 +869,7 @@
     { // why
       render: function () {
         var html = "<h2>" + t("whyTitle") + "</h2><p class='sub'>" + t("whySub") + "</p>" +
-          "<p class='note' style='margin-top:0'>💡 " + esc(whyHint()) + "</p>" +
+          "<p class='note hint' style='margin-top:0'>" + ic("bulb") + "<span>" + esc(whyHint()) + "</span></p>" +
           "<label class='field' for='why'>" + t("mySentence") + "</label><textarea id='why' maxlength='280' placeholder='" + esc(t("whyPh")) + "'>" + esc(S.why) + "</textarea>" +
           "<div class='small muted' id='whyCount'></div>" +
           "<label class='field'>" + t("remTimes") + "</label><div id='remBox'></div>" +
@@ -852,9 +902,28 @@
     }
   ];
 
+  /* welcome screen shown before the essential questions */
+  var WELCOME = {
+    render: function () {
+      return "<div class='welcome'><svg class='logo-big' viewBox='0 0 40 40' aria-hidden='true'><defs><linearGradient id='lg2' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#0f9d6b'/><stop offset='1' stop-color='#14b8a6'/></linearGradient></defs><rect width='40' height='40' rx='11' fill='url(#lg2)'/><path d='M30 20A10 10 0 1 1 27.07 12.93' fill='none' stroke='#fff' stroke-width='3.6' stroke-linecap='round'/><circle cx='29.6' cy='10.4' r='2.7' fill='#f6c453'/></svg>" +
+        "<h2>" + t("welTitle") + "</h2><p class='sub'>" + t("welSub") + "</p>" +
+        "<ul class='wel-list'><li>" + ic("clock") + "<span>" + t("wel1") + "</span></li><li>" + ic("bell") + "<span>" + t("wel2") + "</span></li><li>" + ic("chart") + "<span>" + t("wel3") + "</span></li></ul>" +
+        "<p class='small muted'>" + t("welNote") + "</p></div>";
+    },
+    bind: function () {}, validate: function () {}
+  };
+  var CORE = [WELCOME, STEPS[0], STEPS[1], STEPS[2], STEPS[3], STEPS[9]];   /* welcome, about you, habits, start, amount, why + reminders */
+  var PLAN = [STEPS[4], STEPS[5], STEPS[6], STEPS[7], STEPS[8]];            /* goals, importance, belief, supporter, milestones */
+  var flow = CORE, flowMode = "core";
+  function planIncomplete() {
+    return (!S.goals.length && !S.goalOther.trim()) || S.critical == null || !S.belief || !S.share || !S.milestones.length;
+  }
+  function startPlan() { flow = PLAN; flowMode = "plan"; step = 0; whyWarned = false; route(); window.scrollTo(0, 0); }
+
   /* one short idea of what to write, built from the person's own answers */
   function whyHint() {
-    var goals = joinNice(goalLabels()) || t("fGoalDefault");
+    var goals = joinNice(goalLabels());
+    if (!goals) return t("whyHintNoGoals");
     return S.improve.trim() ? t("whyHintImprove", { goals: goals, improve: S.improve.trim() }) : t("whyHint", { goals: goals });
   }
   function mentionsGoal(text) {
@@ -885,8 +954,8 @@
     if (!list.length) list.push("20:00");
     box.innerHTML = list.map(function (tm, i) {
       return "<div class='row rem-row'><input type='time' id='" + boxId + i + "' value='" + esc(tm) + "' aria-label='" + esc(t("remN", { n: i + 1 })) + "'>" +
-        (list.length > 1 ? "<button class='ghost' data-remdel='" + i + "' aria-label='" + esc(t("remove")) + "'>✕</button>" : "") + "</div>";
-    }).join("") + (list.length < MAX_REMINDERS ? "<button class='ghost' id='" + boxId + "Add'>➕ " + t("remAdd") + "</button>" : "");
+        (list.length > 1 ? "<button class='ghost' data-remdel='" + i + "' aria-label='" + esc(t("remove")) + "'>" + ic("x") + "</button>" : "") + "</div>";
+    }).join("") + (list.length < MAX_REMINDERS ? "<button class='ghost' id='" + boxId + "Add'>" + ic("plus") + "<span>" + t("remAdd") + "</span></button>" : "");
     list.forEach(function (tm, i) {
       ["input", "change"].forEach(function (ev) { $(boxId + i).addEventListener(ev, function () { list[i] = this.value; }); });
     });
@@ -912,19 +981,27 @@
   }
 
   function renderStep() {
-    var s = STEPS[step];
+    var s = flow[step];
     $("stepBody").innerHTML = s.render(); s.bind();
     $("stepError").textContent = "";
-    $("progBar").style.width = ((step + 1) / STEPS.length * 100) + "%";
-    $("stepLabel").textContent = t("stepOf", { n: step + 1, total: STEPS.length });
+    $("progBar").style.width = ((step + 1) / flow.length * 100) + "%";
+    $("stepLabel").textContent = flowMode === "plan" ? t("planTitle") + " · " + t("stepOf", { n: step + 1, total: flow.length })
+      : step === 0 ? "" : t("stepOf", { n: step, total: flow.length - 1 });
     $("backBtn").textContent = t("back");
     $("backBtn").style.visibility = "visible";
-    $("nextBtn").textContent = step === STEPS.length - 1 ? t("startJourney") : t("next");
+    var last = step === flow.length - 1;
+    $("nextBtn").textContent = flowMode === "plan" ? (last ? t("save") : t("next")) : step === 0 ? t("welStart") : last ? t("startJourney") : t("next");
   }
   $("nextBtn").addEventListener("click", function () {
-    var err = STEPS[step].validate();
+    var err = flow[step].validate();
     if (err) { $("stepError").textContent = err; return; }
-    if (step < STEPS.length - 1) { step++; whyWarned = false; save(); renderStep(); window.scrollTo(0, 0); return; }
+    if (step < flow.length - 1) { step++; whyWarned = false; save(); renderStep(); window.scrollTo(0, 0); return; }
+    if (flowMode === "plan") {
+      if (S.critical == null) S.critical = 7;
+      flow = CORE; flowMode = null; step = 0; save(); route(); showTab("pWhy"); toast(t("planSaved")); return;
+    }
+    if (!S.milestones.length) S.milestones = ["24h", "1w", "1m"];
+    flowMode = null;
     S.setupDone = true; S.habits.forEach(function (h) { h.streakStart = h.firstStart = startTs(h); h.slips = []; });
     if (reminderTsFor(new Date()) <= Date.now()) S.lastPrompt = todayStr();
     save(); route(); confetti(); toast(t("toastStart"));
@@ -932,6 +1009,7 @@
   });
   $("backBtn").addEventListener("click", function () {
     if (step > 0) { step--; whyWarned = false; renderStep(); }
+    else if (flowMode === "plan") { flow = CORE; flowMode = null; route(); showTab("pWhy"); }
     else { S.lang = null; save(); route(); }
   });
 
@@ -945,7 +1023,7 @@
     $("greet").textContent = "";
     if (shareMatch) { if (!S.lang) S.lang = (navigator.language || "").indexOf("he") === 0 ? "he" : "en"; applyLang(); showShareView(shareMatch[1]); return; }
     if (!S.lang || !S.gender) { pick.lang = S.lang; pick.gender = S.gender; drawPicks(); $("langScreen").classList.remove("hidden"); return; }
-    if (!S.setupDone) { $("setup").classList.remove("hidden"); renderStep(); return; }
+    if (!S.setupDone || flowMode === "plan") { $("setup").classList.remove("hidden"); renderStep(); return; }
     $("app").classList.remove("hidden"); $("tabbar").classList.remove("hidden");
     showTab(currentTab);
     if (hash === "#checkin") { history.replaceState(null, "", location.pathname + location.search); showTab("pHome"); if (startedIdx().length) openCheckin(); }
@@ -981,38 +1059,42 @@
     p.innerHTML =
       "<div id='checkinBanner' class='banner hidden'><span>" + t("ciBanner") + "</span><button class='primary' id='openCheckinBtn'>" + t("ciNow") + "</button></div>" +
       "<div class='card why-card'><span class='eyebrow'>" + t("whyPageTitle") + "</span>" + esc(S.why) + "</div>" +
-      "<div class='actions' style='margin-bottom:16px'><button class='primary' id='checkinNowBtn'>" + t("checkinBtn") + "</button></div>" +
+      "<div class='actions' style='margin-bottom:16px'><button class='primary' id='checkinNowBtn'>" + ic("check") + "<span>" + t("checkinBtn") + "</span></button></div>" +
       "<div class='slider' id='slider'>" + S.habits.map(function (h, i) {
-        return "<div class='card slide' data-slide='" + i + "'><div class='hc-head'><span class='emo'>" + EMO[h.key] + "</span><h3>" + esc(habitLabel(h)) + "</h3></div>" +
+        return "<div class='card slide hc" + (i % 3) + "' data-slide='" + i + "'><div class='hc-head'><span class='emo'>" + EMO[h.key] + "</span><h3>" + esc(habitLabel(h)) + "</h3></div>" +
           "<div class='timer-title' id='tt" + i + "'></div><div class='timer'>" +
           "<div><b id='tD" + i + "'>0</b><span>" + t("days") + "</span></div><div><b id='tH" + i + "'>0</b><span>" + t("hours") + "</span></div>" +
           "<div><b id='tM" + i + "'>0</b><span>" + t("min") + "</span></div><div><b id='tS" + i + "'>0</b><span>" + t("sec") + "</span></div></div>" +
           "<div class='fav-line' id='fav" + i + "'></div>" +
           "<div class='stats' id='stats" + i + "'></div>" +
-          chartHtml(h, i) +
-          "<div class='ms-strip' id='ms" + i + "'></div>" +
-          "<div class='hc-days'><div class='hc-days-head'><span>" + t("daysTitle") + "</span><span id='dcount" + i + "'></span></div><div class='days' id='days" + i + "'></div>" +
-          "<p class='small muted' style='margin:8px 0 0'>" + t("daysLegend") + "</p></div>" +
-          "<div class='actions' style='margin-top:12px'><button data-tips='" + i + "'>" + t("tipsBtn") + "</button><button data-sayno='" + i + "'></button></div>" +
+          "<div class='actions' style='margin-top:12px'><button data-tips='" + i + "'>" + ic("bulb") + "<span>" + t("tipsBtn") + "</span></button><button data-sayno='" + i + "'></button></div>" +
+          /* the rest is one tap away */
+          "<details class='more' data-more='" + i + "'" + (moreOpen[i] ? " open" : "") + "><summary>" + t("moreDetails") + ic("chevron", "chev") + "</summary>" +
+            "<div class='stats' id='stats2" + i + "' style='margin-top:12px'></div>" +
+            chartHtml(h, i) +
+            "<div class='ms-strip' id='ms" + i + "'></div>" +
+            "<div class='hc-days'><div class='hc-days-head'><span>" + t("daysTitle") + "</span><span id='dcount" + i + "'></span></div><div class='days' id='days" + i + "'></div>" +
+            "<p class='small muted' style='margin:8px 0 0'>" + t("daysLegend") + "</p></div>" +
+          "</details>" +
           (hasStarted(h) ? "<div class='slip-wrap'><button class='slip-btn' data-slip='" + i + "'>" + t("slipBtn") + "</button></div>" : "") + "</div>";
       }).join("") + "</div>" +
       (multi ? "<div class='dots' role='tablist'>" + S.habits.map(function (h, i) {
-        return "<button class='dot" + (i === msIdx ? " on" : "") + "' data-dot='" + i + "' aria-label='" + esc(habitLabel(h)) + "'></button>"; }).join("") + "</div>" +
+        return "<button class='dot hc" + (i % 3) + (i === msIdx ? " on" : "") + "' data-dot='" + i + "' aria-label='" + esc(habitLabel(h)) + "'></button>"; }).join("") + "</div>" +
         "<div class='swipe-hint'>" + t("swipeHint") + "</div>" : "<div class='single-gap'></div>") +
       "<div class='card'><h3>" + t("quoteTitle") + "</h3>" + quoteHtml() +
-        "<div class='tip-day'><b>💡 " + t("tipOfDay") + "</b><p>" + esc(todaysTip()) + "</p></div></div>" +
-      (S.share !== "self" ? "<div class='card'><h3>" + t("shareCardTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("shareCardSub") + "</p><div class='actions'><button class='primary' id='shareBtn'>" + t("shareBtn") + "</button></div></div>" : "") +
+        "<div class='tip-day'><b>" + ic("bulb") + " " + t("tipOfDay") + "</b><p>" + esc(todaysTip()) + "</p></div></div>" +
+      (S.share !== "self" ? "<div class='card'><h3>" + t("shareCardTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("shareCardSub") + "</p><div class='actions'><button class='primary' id='shareBtn'>" + ic("share") + "<span>" + t("shareBtn") + "</span></button></div></div>" : "") +
       "";
     $("checkinNowBtn").addEventListener("click", function () { if (startedIdx().length) openCheckin(); else toast(t("notStartedToast")); });
     var ans = S.checkins[todayStr()];
     $("checkinNowBtn").classList.toggle("pulse", !ans);
     $("checkinNowBtn").classList.toggle("done", !!ans);
     $("checkinNowBtn").classList.toggle("primary", !ans);
-    if (ans) $("checkinNowBtn").textContent = ans === "yes" ? t("checkinDone") : t("checkinDoneNo");
+    if (ans) $("checkinNowBtn").innerHTML = ic("check") + "<span>" + esc(ans === "yes" ? t("checkinDone") : t("checkinDoneNo")) + "</span>";
     if (!startedIdx().length) {
       var first = Math.min.apply(null, S.habits.map(function (h) { return h.streakStart || Infinity; }));
       $("checkinNowBtn").classList.remove("pulse");
-      $("checkinNowBtn").textContent = t("notStartedBtn", { t: countdownText(first - Date.now()) });
+      $("checkinNowBtn").innerHTML = ic("clock") + "<span>" + esc(t("notStartedBtn", { t: countdownText(first - Date.now()) })) + "</span>";
     }
     $("openCheckinBtn").addEventListener("click", openCheckin);
     p.querySelectorAll("[data-slip]").forEach(function (b) { b.addEventListener("click", function () { askSlip(+b.dataset.slip); }); });
@@ -1022,6 +1104,7 @@
     });
     bindSlider();
     bindCharts();
+    p.querySelectorAll("[data-more]").forEach(function (d) { d.addEventListener("toggle", function () { moreOpen[+d.dataset.more] = d.open; }); });
     if ($("shareBtn")) $("shareBtn").addEventListener("click", shareProgress);
     tick(); renderStats(); renderBadges(); renderDays();
     if (S.lastPrompt === todayStr() && !S.checkins[todayStr()] && startedIdx().length) $("checkinBanner").classList.remove("hidden");
@@ -1121,9 +1204,9 @@
   }
   function openTips(i) {
     var h = S.habits[i], list = L().tips[h.key] || L().tips.other;
-    openModal("<div class='big'>💡</div><h2>" + esc(t("tipsTitle", { habit: habitLabel(h) })) + "</h2>" +
+    openModal("" + bigIc('bulb') + "<h2>" + esc(t("tipsTitle", { habit: habitLabel(h) })) + "</h2>" +
       "<ul class='tips'>" + list.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" +
-      "<h3>🌊 " + t("tipsUrge") + "</h3><ul class='tips'>" + L().tips.urge.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" +
+      "<h3>" + ic("wave") + " " + t("tipsUrge") + "</h3><ul class='tips'>" + L().tips.urge.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" +
       "<div class='actions'><button id='tipsLearn'>" + t("tipsMore") + "</button><button class='primary' id='okBtn'>" + t("thanks") + "</button></div>");
     $("okBtn").addEventListener("click", closeModal);
     $("tipsLearn").addEventListener("click", function () { closeModal(); showTab("pLearn"); });
@@ -1157,17 +1240,19 @@
     S.habits.forEach(function (h, i) {
       if (!$("stats" + i)) return;
       var x = hab(h.key), m = HABIT_META[h.key] || {}, ms = Math.max(0, streakMsOf(h)), days = ms / 864e5, best = Math.max(h.bestMs, ms);
-      var html = stat(t("dh", { d: Math.floor(best / 864e5), h: Math.floor(best / 36e5) % 24 }), t("bestStreak")) +
-        stat(h.restarts, h.restarts === 1 ? t("restartOne") : t("restartMany"));
+      var tiles = [];
       if (m.money) {
-        html += stat("~" + fmtNum((+h.amount2 || 0) / 7 * days), x.avoided);
-        html += stat(S.currency + fmtNum((+h.amount || 0) * days), t("moneyKept"));
+        tiles.push(stat(S.currency + fmtNum((+h.amount || 0) * days), t("moneyKept")));
+        tiles.push(stat("~" + fmtNum((+h.amount2 || 0) / 7 * days), x.avoided));
       } else {
         var perDay = m.choice ? freqPerDay(h) : m.per === "day" ? (+h.amount || 0) : (+h.amount || 0) / 7;
-        if (!m.choice || h.freqChoice !== "") html += stat("~" + fmtNum(perDay * days), x.avoided);
-        if (h.cost) html += stat(S.currency + fmtNum((+h.cost) * days), t("moneySaved"));
+        if (h.cost) tiles.push(stat(S.currency + fmtNum((+h.cost) * days), t("moneySaved")));
+        if (!m.choice || h.freqChoice !== "") tiles.push(stat("~" + fmtNum(perDay * days), x.avoided));
       }
-      $("stats" + i).innerHTML = html;
+      tiles.splice(1, 0, stat(t("dh", { d: Math.floor(best / 864e5), h: Math.floor(best / 36e5) % 24 }), t("bestStreak")));
+      tiles.push(stat(h.restarts, h.restarts === 1 ? t("restartOne") : t("restartMany")));
+      $("stats" + i).innerHTML = tiles.slice(0, 2).join("");
+      if ($("stats2" + i)) $("stats2" + i).innerHTML = tiles.slice(2).join("");
     });
   }
   function checkinsYes() { return Object.keys(S.checkins).filter(function (k) { return S.checkins[k] === "yes"; }).length; }
@@ -1206,7 +1291,7 @@
       });
       var b = document.querySelector("[data-sayno='" + i + "']");
       if (b) {
-        b.textContent = h.saidNo ? t("saidNoDone", { date: new Date(h.saidNo + "T12:00").toLocaleDateString(L().locale, { month: "short", day: "numeric" }) }) : t("saidNoBtn");
+        b.innerHTML = ic("ban") + "<span>" + esc(h.saidNo ? t("saidNoDone", { date: new Date(h.saidNo + "T12:00").toLocaleDateString(L().locale, { month: "short", day: "numeric" }) }) : t("saidNoBtn")) + "</span>";
         b.disabled = !!h.saidNo;
       }
     });
@@ -1235,7 +1320,7 @@
     var label = L().milestones[msId], text = t("msShareText", { ms: label, habit: habitNameOf(h) });
     openModal("<div class='big'>" + (m ? m.emo : "🎉") + "</div><h2>" + (isNew ? t("msReachedTitle") + " " : "") + esc(label) + "</h2>" +
       "<p class='c'>" + esc(t("msReachedText", { ms: label, habit: habitNameOf(h) })) + "</p>" +
-      "<div class='actions'><button class='primary' id='msShare'>" + t("msShareBtn") + "</button></div>" +
+      "<div class='actions'><button class='primary' id='msShare'>" + ic("share") + "<span>" + t("msShareBtn") + "</span></button></div>" +
       "<div class='actions'><a class='btn' id='msWa' href='#' target='_blank' rel='noopener'>" + t("shareWa") + "</a><button id='msCopy'>" + t("shareCopy") + "</button></div>" +
       "<div class='actions'><button class='ghost' id='msLater'>" + t("notNow") + "</button></div>");
     if (isNew) confetti();
@@ -1303,7 +1388,7 @@
   function openDay(k, hi) {
     var h = S.habits[hi], cur = dayStatus(h, k);
     var label = new Date(k + "T12:00").toLocaleDateString(L().locale, { weekday: "long", day: "numeric", month: "long" });
-    openModal("<div class='big'>📅</div><h2>" + esc(label) + "</h2><p class='c'>" + esc(t("dayQFor", { habit: habitNameOf(h) })) + "</p>" +
+    openModal("" + bigIc('calendar') + "<h2>" + esc(label) + "</h2><p class='c'>" + esc(t("dayQFor", { habit: habitNameOf(h) })) + "</p>" +
       "<div class='opts'><button class='opt" + (cur === "yes" ? " selected" : "") + "' id='dYes'>" + t("dayYes") + "</button>" +
       "<button class='opt" + (cur === "no" ? " selected" : "") + "' id='dNo'>" + t("dayNo") + "</button></div>" +
       "<p class='small muted'>" + t("dayNoNote") + "</p>" +
@@ -1322,7 +1407,7 @@
   /* ================= slip + check-in ================= */
   function askSlip(i) {
     var h = S.habits[i];
-    openModal("<div class='big'>🫂</div><h2>" + esc(S.habits.length > 1 ? t("slipTitleFor", { habit: habitNameOf(h) }) : t("slipTitle")) + "</h2><p class='c'>" + t("slipText") + "</p>" +
+    openModal("" + bigIc('heart') + "<h2>" + esc(S.habits.length > 1 ? t("slipTitleFor", { habit: habitNameOf(h) }) : t("slipTitle")) + "</h2><p class='c'>" + t("slipText") + "</p>" +
       "<div class='actions'><button id='slipCancel'>" + t("slipCancel") + "</button><button class='danger' id='slipConfirm'>" + t("slipConfirm") + "</button></div>");
     $("slipCancel").addEventListener("click", closeModal);
     $("slipConfirm").addEventListener("click", function () { relapse([i]); });
@@ -1339,14 +1424,14 @@
     });
     save(); if (currentTab === "pHome") renderHome();
     var proof = held >= 36e5 ? t("relProof", { held: heldText(held) }) : t("relNew");
-    openModal("<div class='big'>🌱</div><h2>" + t("relTitle") + "</h2><p class='c'>" + esc(proof) + "</p>" +
+    openModal("" + bigIc('restart') + "<h2>" + t("relTitle") + "</h2><p class='c'>" + esc(proof) + "</p>" +
       "<p class='c muted'>" + t("relRemember") + "</p><div class='note' style='text-align:center'><i>" + esc(S.why) + "</i></div>" +
       "<p class='c'>" + t(S.habits.length > idxs.length ? "relRestartSome" : "relRestart") + "</p><div class='actions'><button class='primary' id='okBtn'>" + t("relBtn") + "</button></div>");
     $("okBtn").addEventListener("click", closeModal);
   }
   function openCheckin() {
     if (!startedIdx().length) { toast(t("notStartedToast")); return; }
-    openModal("<div class='big'>📝</div><h2>" + t("ciTitle") + "</h2>" +
+    openModal("" + bigIc('check') + "<h2>" + t("ciTitle") + "</h2>" +
       "<p class='c'><b>" + esc(t("ciQ", { habit: startedNames() })) + "</b></p>" +
       "<p class='c small muted' style='margin:12px 0 0'>" + t("moodQ") + "</p><div class='moods' role='group' aria-label='" + esc(t("moodQ")) + "'>" +
         MOODS.map(function (m, i) { return "<button data-mood='" + (i + 1) + "' aria-pressed='false' aria-label='" + esc(L().moods[i]) + "' title='" + esc(L().moods[i]) + "'>" + m + "</button>"; }).join("") + "</div>" +
@@ -1388,7 +1473,7 @@
   /* "No" with several habits: ask which ones, and restart only those timers */
   function askWhichSlipped() {
     var picked = [];
-    openModal("<div class='big'>🫂</div><h2>" + t("ciWhich") + "</h2><p class='c'>" + t("ciWhichSub") + "</p><div class='opts'>" +
+    openModal("" + bigIc('heart') + "<h2>" + t("ciWhich") + "</h2><p class='c'>" + t("ciWhichSub") + "</p><div class='opts'>" +
       startedIdx().map(function (i) { var h = S.habits[i]; return "<button class='opt' data-which='" + i + "' aria-pressed='false'>" + EMO[h.key] + " " + esc(habitLabel(h)) + "</button>"; }).join("") +
       "</div><div class='error' id='whichErr' role='alert'></div><div class='actions'><button id='whichBack'>" + t("back") + "</button><button class='danger' id='whichOk'>" + t("ciWhichBtn") + "</button></div>");
     $("modal").querySelectorAll("[data-which]").forEach(function (b) {
@@ -1424,7 +1509,7 @@
   /* ================= why page ================= */
   function whyLines() {
     var lines = [], d = Math.floor(longestStreak() / 864e5), goals = goalLabels();
-    lines.push(t("wlCrit", { crit: S.critical }));
+    if (S.critical != null) lines.push(t("wlCrit", { crit: S.critical }));
     if (goals.length) lines.push(t("wlGoals", { goals: joinNice(goals) }));
     if (S.improve.trim()) lines.push(t("wlImprove", { improve: S.improve.trim() }));
     if (S.milestones.length) lines.push(t("wlMs", { ms: milestoneLabels() }));
@@ -1435,12 +1520,14 @@
   function renderWhy(editing) {
     var lines = whyLines(), n = Math.floor(Date.now() / 864e5);
     var html = "<div class='card why-big'><span class='eyebrow'>" + t("whyPageTitle") + "</span>" + esc(S.why) + "</div>" +
-      "<div class='card why-line'><span class='eyebrow'>" + t("whyToday") + "</span>" + esc(lines[n % lines.length]) + "</div>" +
+      (lines.length ? "<div class='card why-line'><span class='eyebrow'>" + t("whyToday") + "</span>" + esc(lines[n % lines.length]) + "</div>" : "") +
+      (planIncomplete() ? "<div class='card plan-card'><h3>" + ic("compass") + " " + t("planTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("planSub") + "</p>" +
+        "<div class='actions'><button class='primary' id='planBtn'>" + t("planBtn") + "</button></div></div>" : "") +
       "<div class='card'><div class='kv'>" +
-        "<div><span>" + t("whyGoals") + "</span><p>" + esc(joinNice(goalLabels())) + "</p></div>" +
+        (goalLabels().length ? "<div><span>" + t("whyGoals") + "</span><p>" + esc(capFirst(joinNice(goalLabels()))) + "</p></div>" : "") +
         (S.improve.trim() ? "<div><span>" + t("whyImprove") + "</span><p>" + esc(S.improve) + "</p></div>" : "") +
-        "<div><span>" + t("whyMs") + "</span><p>" + esc(milestoneLabels()) + "</p></div>" +
-        "<div><span>" + t("whyCrit") + "</span><p>" + S.critical + " / 10 — " + esc(critText(S.critical)) + "</p></div>" +
+        (S.milestones.length ? "<div><span>" + t("whyMs") + "</span><p>" + esc(milestoneLabels()) + "</p></div>" : "") +
+        (S.critical != null ? "<div><span>" + t("whyCrit") + "</span><p>" + S.critical + " / 10 — " + esc(critText(S.critical)) + "</p></div>" : "") +
         (S.about.trim() ? "<div><span>" + t("whyAbout") + "</span><p>" + esc(S.about) + "</p></div>" : "") +
       "</div></div>";
     var days = Object.keys(S.journal || {}).sort().reverse().slice(0, 30);
@@ -1454,7 +1541,8 @@
         "<label class='field' for='whyEdit'>" + t("mySentence") + "</label><textarea id='whyEdit' maxlength='280'>" + esc(S.why) + "</textarea>" +
         "<div class='error' id='whyErr'></div><div class='actions' style='margin-top:10px'><button id='whyCancel'>" + t("cancel") + "</button><button class='primary' id='whySave'>" + t("save") + "</button></div></div>";
     } else {
-      html += "<div class='actions'><button id='whyEditBtn'>✏️ " + t("whyEdit") + "</button></div>";
+      html += "<div class='actions'><button id='whyEditBtn'>" + ic("pencil") + "<span>" + t("whyEdit") + "</span></button>" +
+        (planIncomplete() ? "" : "<button id='planEditBtn'>" + ic("compass") + "<span>" + t("planEdit") + "</span></button>") + "</div>";
     }
     $("pWhy").innerHTML = html;
     if (editing) {
@@ -1465,12 +1553,16 @@
         if (err) { $("whyErr").textContent = err; return; }
         S.why = v.trim(); save(); renderWhy(false); toast(t("saved"));
       });
-    } else $("whyEditBtn").addEventListener("click", function () { renderWhy(true); });
+    } else {
+      $("whyEditBtn").addEventListener("click", function () { renderWhy(true); });
+      if ($("planEditBtn")) $("planEditBtn").addEventListener("click", startPlan);
+    }
+    if ($("planBtn")) $("planBtn").addEventListener("click", startPlan);
   }
 
   /* ================= learn ================= */
   function articles() { return Array.isArray(window.BF_ARTICLES) ? window.BF_ARTICLES : []; }
-  var TYPE_EMO = { research: "🔬", story: "💬", guide: "🧭" };
+  var TYPE_EMO = { research: "chart", story: "message", guide: "compass" };
   function readable() {
     /* English users: English only. Hebrew users: Hebrew first, then English. */
     var list = articles().filter(function (a) { return S.lang === "he" || a.lang === "en"; });
@@ -1484,7 +1576,7 @@
     function item(a) {
       var about = a.about ? (a.about[S.lang] || a.about.en || "") : "";
       var badge = S.lang === "he" && a.lang === "en" ? " · " + t("inEnglish") : "";
-      return "<a class='btn art' href='" + esc(a.url) + "' target='_blank' rel='noopener'><span class='emo'>" + (TYPE_EMO[a.type] || "📖") + "</span><span><b>" + esc(a.title) +
+      return "<a class='btn art' href='" + esc(a.url) + "' target='_blank' rel='noopener'><span class='emo art-ic'>" + ic(TYPE_EMO[a.type] || "book") + "</span><span><b>" + esc(a.title) +
         "</b><small>" + esc(a.source) + " · " + t("type_" + a.type) + badge + "</small>" + (about ? "<small class='about'>" + esc(about) + "</small>" : "") + "</span><span class='ext' aria-hidden='true'>↗</span></a>";
     }
     function section(title, items) { return items.length ? "<div class='section-title'>" + esc(title) + "</div><div class='art-list'>" + items.map(item).join("") + "</div>" : ""; }
@@ -1494,7 +1586,7 @@
     S.habits.forEach(function (h) {
       html += section(EMO[h.key] + " " + habitLabel(h), mine.filter(function (a) { return a.habits.indexOf(h.key) >= 0; }));
     });
-    html += section("🌊 " + t("general"), gen);
+    html += section(t("general"), gen);
     html += "<p class='small muted' style='margin-top:18px'>" + t("learnNote") + "</p>";
     p.innerHTML = html;
   }
@@ -1543,12 +1635,12 @@
   }
   function renderProfile() {
     var ns = notifState(), notifHtml;
-    if (ns === "on") notifHtml = "<p class='small'>" + t("notifOn") + " · " + esc(cleanTimes(S.reminderTimes).join(" · ")) + "</p><div class='actions'><button id='notifOffBtn'>" + t("notifTurnOff") + "</button></div>";
+    if (ns === "on") notifHtml = "<p class='small notif-on'>" + ic("bell") + " " + t("notifOn") + " · " + esc(cleanTimes(S.reminderTimes).join(" · ")) + "</p><div class='actions'><button id='notifOffBtn'>" + t("notifTurnOff") + "</button></div>";
     else if (ns === "ios") notifHtml = "<div class='note gold'><b>" + t("iosGuideTitle") + "</b><br>" + t("iosGuide") + "</div>";
     else if (ns === "blocked") notifHtml = "<p class='small'>" + t("notifBlocked") + "</p>";
     else if (ns === "unsupported") notifHtml = "<p class='small muted'>" + t("notifUnsupported") + "</p>";
     else if (ns === "offline") notifHtml = "<p class='small muted'>" + t("notifOffline") + "</p>";
-    else notifHtml = "<div class='actions'><button class='primary' id='notifOnBtn'>" + t("notifOff") + "</button></div>";
+    else notifHtml = "<div class='actions'><button class='primary' id='notifOnBtn'>" + ic("bell") + "<span>" + t("notifOff") + "</span></button></div>";
 
     $("pProfile").innerHTML =
       "<div class='card'><h2>" + t("profPageTitle") + "</h2>" +
@@ -1561,12 +1653,12 @@
         "<label class='field'>" + t("remTimes") + "</label><div id='prRemBox'></div><p class='small muted'>" + t("remSub") + "</p>" +
         "<div class='error' id='prErr'></div><div class='actions' style='margin-top:8px'><button class='primary' id='prSave'>" + t("save") + "</button></div></div>" +
       habitsCardHtml() +
-      "<div class='card'><h3>" + t("fbTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("fbSub") + "</p>" +
+      "<div class='card'><h3>" + ic("message") + " " + t("fbTitle") + "</h3><p class='small muted' style='margin-top:0'>" + t("fbSub") + "</p>" +
         "<textarea id='fbText' maxlength='1000' placeholder='" + esc(t("fbPh")) + "'></textarea>" +
-        "<div class='error' id='fbErr' role='alert'></div><div class='actions' style='margin-top:8px'><button class='primary' id='fbSend'>" + t("fbSend") + "</button></div></div>" +
+        "<div class='error' id='fbErr' role='alert'></div><div class='actions' style='margin-top:8px'><button class='primary' id='fbSend'>" + ic("send") + "<span>" + t("fbSend") + "</span></button></div></div>" +
       "<div class='card'><h3>" + t("notifTitle") + "</h3>" + notifHtml +
         (FB.uid ? "<p class='small muted' style='margin:10px 0 0'>" + t("deviceCode", { code: FB.uid.slice(-6) }) + "</p>" : "") + "</div>" +
-      (installEvent ? "<div class='card'><div class='actions'><button id='installBtn'>" + t("installBtn") + "</button></div></div>" : "") +
+      (installEvent ? "<div class='card'><div class='actions'><button id='installBtn'>" + ic("download") + "<span>" + t("installBtn") + "</span></button></div></div>" : "") +
       "<div class='card'><div class='actions'><button class='danger' id='resetBtn'>" + t("resetBtn") + "</button></div></div>" +
       "<p class='small muted' style='text-align:center'>" + t("version", { v: APP_VERSION }) + (FB.uid ? " · " + t("deviceCode", { code: FB.uid.slice(-6) }) : "") + "</p>";
 
@@ -1602,7 +1694,7 @@
     if ($("notifOffBtn")) $("notifOffBtn").addEventListener("click", disablePush);
     if ($("installBtn")) $("installBtn").addEventListener("click", function () { installEvent.prompt(); installEvent = null; renderProfile(); });
     $("resetBtn").addEventListener("click", function () {
-      openModal("<div class='big'>⚠️</div><h2>" + t("resetTitle") + "</h2><p class='c'>" + t("resetText") + "</p>" +
+      openModal("" + bigIc('alert') + "<h2>" + t("resetTitle") + "</h2><p class='c'>" + t("resetText") + "</p>" +
         "<div class='actions'><button id='rsCancel'>" + t("cancel") + "</button><button class='danger' id='rsYes'>" + t("yesReset") + "</button></div>");
       $("rsCancel").addEventListener("click", closeModal);
       $("rsYes").addEventListener("click", function () {
@@ -1624,11 +1716,11 @@
       var m = HABIT_META[h.key] || {}, price = m.money ? h.amount : h.cost;
       var details = [since ? t("sinceDate", { date: since }) : ""].concat(m.costly || m.money ? [price !== "" && price != null ? t("pricePerDay", { p: S.currency + price }) : t("noPrice")] : []).filter(Boolean).join(" · ");
       return "<div class='habit-row'><span class='hr-info'><b>" + EMO[h.key] + " " + esc(habitLabel(h)) + "</b><small>" + esc(details) + "</small></span>" +
-        "<span class='row-btns'><button class='ghost' data-eds='" + i + "'>" + t("editStart") + "</button>" + (m.costly || m.money ? "<button class='ghost' data-edp='" + i + "'>" + t("editPrice") + "</button>" : "") +
-        (S.habits.length > 1 ? "<button class='ghost' data-rmh='" + i + "'>" + t("remove") + "</button>" : "") + "</span></div>";
+        "<span class='row-btns'><button class='ghost' data-eds='" + i + "' title='" + esc(t("editStart")) + "'>" + ic("calendar") + "<span>" + t("editStart") + "</span></button>" + (m.costly || m.money ? "<button class='ghost' data-edp='" + i + "'>" + ic("price") + "<span>" + t("editPrice") + "</span></button>" : "") +
+        (S.habits.length > 1 ? "<button class='ghost' data-rmh='" + i + "' aria-label='" + esc(t("remove")) + "' title='" + esc(t("remove")) + "'>" + ic("trash") + "</button>" : "") + "</span></div>";
     }).join("") + "</div>" +
       (S.habits.length === 1 ? "<p class='small muted'>" + t("keepOneHabit") + "</p>" : "") +
-      (avail.length ? "<div class='actions' style='margin-top:10px'><button id='addHabitBtn'>➕ " + t("addHabit") + "</button></div>" : "") + "</div>";
+      (avail.length ? "<div class='actions' style='margin-top:10px'><button id='addHabitBtn'>" + ic("plus") + "<span>" + t("addHabit") + "</span></button></div>" : "") + "</div>";
   }
   function openAddHabit(draft) {
     var avail = HABIT_ORDER.filter(function (k) { return !findHabit(k); });
@@ -1674,7 +1766,7 @@
   /* change when a habit's journey started; slips from before the new date are dropped */
   function openEditStart(i) {
     var h = S.habits[i], d = new Date(h.firstStart || h.streakStart || Date.now());
-    openModal("<div class='big'>📅</div><h2>" + esc(t("editStartTitle", { habit: habitLabel(h) })) + "</h2>" +
+    openModal("" + bigIc('calendar') + "<h2>" + esc(t("editStartTitle", { habit: habitLabel(h) })) + "</h2>" +
       "<div class='row'><div><label class='field' for='esDate'>" + t("startDate") + "</label><input type='date' id='esDate' value='" + dateKey(d) + "'></div>" +
       "<div><label class='field' for='esTime'>" + t("startTime") + "</label><input type='time' id='esTime' value='" + pad(d.getHours()) + ":" + pad(d.getMinutes()) + "'></div></div>" +
       "<p class='small muted'>" + t("editStartNote") + "</p>" +
@@ -1694,7 +1786,7 @@
   }
   function openEditPrice(i) {
     var h = S.habits[i], m = HABIT_META[h.key] || {}, cur = m.money ? h.amount : h.cost;
-    openModal("<div class='big'>₪</div><h2>" + esc(t("editPriceTitle", { habit: habitLabel(h) })) + "</h2>" +
+    openModal("" + bigIc('price') + "<h2>" + esc(t("editPriceTitle", { habit: habitLabel(h) })) + "</h2>" +
       "<label class='field' for='epVal'>" + esc(m.money ? hab(h.key).q : t("costQ")) + " (" + S.currency + ")" + (m.money ? "" : " <span class='muted'>" + t("optional") + "</span>") + "</label>" +
       "<input type='number' id='epVal' min='0' step='any' inputmode='decimal' value='" + esc(cur || "") + "'>" +
       "<p class='small muted'>" + t("priceNote") + "</p>" +
@@ -1710,7 +1802,7 @@
   }
   function askRemoveHabit(i) {
     var h = S.habits[i];
-    openModal("<div class='big'>🗑️</div><h2>" + esc(t("removeHabitTitle", { habit: habitLabel(h) })) + "</h2><p class='c'>" + t("removeHabitText") + "</p>" +
+    openModal("" + bigIc('trash') + "<h2>" + esc(t("removeHabitTitle", { habit: habitLabel(h) })) + "</h2><p class='c'>" + t("removeHabitText") + "</p>" +
       "<div class='actions'><button id='rmCancel'>" + t("cancel") + "</button><button class='danger' id='rmYes'>" + t("removeHabitBtn") + "</button></div>");
     $("rmCancel").addEventListener("click", closeModal);
     $("rmYes").addEventListener("click", function () {
@@ -1721,7 +1813,7 @@
   function offerReminders() {
     var ns = notifState();
     if (ns !== "off" && ns !== "ios") return;
-    openModal("<div class='big'>🔔</div><h2>" + t("notifTitle") + "</h2><p class='c'>" + t("remSub") + "</p>" +
+    openModal("" + bigIc('bell') + "<h2>" + t("notifTitle") + "</h2><p class='c'>" + t("remSub") + "</p>" +
       (ns === "ios" ? "<div class='note gold'><b>" + t("iosGuideTitle") + "</b><br>" + t("iosGuide") + "</div><div class='actions'><button class='primary' id='okBtn'>" + t("thanks") + "</button></div>"
         : "<div class='actions'><button id='laterBtn'>" + t("ciLater") + "</button><button class='primary' id='onBtn'>" + t("notifOff") + "</button></div>"));
     if ($("okBtn")) $("okBtn").addEventListener("click", closeModal);
@@ -1814,7 +1906,7 @@
     syncNow().then(function () {
       var url = shareUrl(), text = t("shareText", { habit: habitNames() });
       var wa = "https://wa.me/?text=" + encodeURIComponent(text + " " + url);
-      openModal("<div class='big'>🔗</div><h2>" + t("shareCardTitle") + "</h2><p class='c small muted'>" + t("shareCardSub") + "</p>" +
+      openModal("" + bigIc('share') + "<h2>" + t("shareCardTitle") + "</h2><p class='c small muted'>" + t("shareCardSub") + "</p>" +
         "<div class='linkbox' id='shareLink'>" + esc(url) + "</div>" +
         "<div class='actions'>" + (navigator.share ? "<button class='primary' id='nativeShare'>" + t("shareBtn") + "</button>" : "") +
         "<a class='btn' href='" + esc(wa) + "' target='_blank' rel='noopener'>" + t("shareWa") + "</a><button id='copyLink'>" + t("shareCopy") + "</button></div>" +

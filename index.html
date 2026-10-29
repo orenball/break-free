@@ -20,7 +20,6 @@
     --bg: #f1f7f3; --panel: #ffffff; --panel-2: #edf4f0; --text: #15241e; --muted: #5a6d65;
     --border: #d6e3dc; --accent: #0f9d6b; --accent-2: #13b37c; --accent-soft: #d9f3e7; --accent-text: #ffffff;
     --grad: linear-gradient(135deg, #0f9d6b 0%, #14b8a6 100%); --grad-text: #ffffff; --glow: rgba(15, 157, 107, 0.32);
-    --c0: #0f9d6b; --c1: #4f46e5; --c2: #d97706;   /* habit card colours: green, indigo, amber */
     --ink: linear-gradient(135deg, #16233f 0%, #283b6b 100%); --ink-glow: rgba(22, 35, 63, 0.28);   /* deep navy for the why card */
     --warn: #c9463f; --warn-soft: #fbe6e5; --gold: #c98f12; --gold-soft: #fbf0d5;
     --shadow: 0 6px 20px rgba(20, 40, 30, 0.10); --overlay: rgba(10, 20, 15, 0.55);
@@ -31,7 +30,6 @@
       --bg: #101613; --panel: #19221e; --panel-2: #212c27; --text: #e6efea; --muted: #94a59d;
       --border: #2a3832; --accent: #34d399; --accent-2: #6ee7b7; --accent-soft: #163a2c; --accent-text: #0b1a13;
       --grad: linear-gradient(135deg, #059669 0%, #0d9488 100%); --grad-text: #ffffff; --glow: rgba(52, 211, 153, 0.28);
-      --c0: #10b981; --c1: #6366f1; --c2: #f59e0b;
       --ink: linear-gradient(135deg, #1d2a4d 0%, #2f437a 100%); --ink-glow: rgba(0, 0, 0, 0.35);
       --warn: #ef6f6a; --warn-soft: #3a2120; --gold: #f0bf4c; --gold-soft: #3a3020;
       --shadow: 0 6px 20px rgba(0, 0, 0, 0.4); --overlay: rgba(0, 0, 0, 0.65);
@@ -186,18 +184,18 @@
   .wel-list .ic { color: var(--accent); width: 22px; height: 22px; }
   .plan-card { border: 2px solid var(--accent-soft); }
   /* bold habit cards: a solid coloured header, numbers and chart in the same colour */
-  .card.slide { --hc: var(--c0); --hc-soft: color-mix(in srgb, var(--hc) 13%, var(--panel)); padding-top: 0 !important; overflow: hidden; }
-  .slide.hc1, .dot.hc1 { --hc: var(--c1); }
-  .slide.hc2, .dot.hc2 { --hc: var(--c2); }
+  /* --hc is each habit's own colour (HABIT_COLOR); --hc-ink is the same colour for text on the card */
+  .card.slide { --hc: var(--accent); --hc-soft: color-mix(in srgb, var(--hc) 13%, var(--panel)); --hc-ink: var(--hc); padding-top: 0 !important; overflow: hidden; }
+  @media (prefers-color-scheme: dark) { .card.slide { --hc-ink: color-mix(in srgb, var(--hc) 55%, #fff); --hc-soft: color-mix(in srgb, var(--hc) 22%, var(--panel)); } }
   .slide .hc-head { background: var(--hc); color: #fff; margin: 0 -20px 14px; padding: 14px 20px; }
   .slide .hc-head h3 { color: #fff; }
   .slide .hc-head .emo { background: rgba(255, 255, 255, 0.22); border-radius: 50%; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; }
   .slide .timer div { background: var(--hc-soft); }
-  .slide .timer b { color: var(--hc); }
+  .slide .timer b { color: var(--hc-ink); }
   .slide .chart .line { stroke: var(--hc); }
   .slide .chart .area { fill: var(--hc-soft); }
   .slide .chart .enddot { fill: var(--hc); }
-  .slide details.more > summary { color: var(--hc); }
+  .slide details.more > summary { color: var(--hc-ink); }
   .dot.on { background: var(--hc, var(--accent)); }
   @media (max-width: 420px) { .slide .hc-head { margin: 0 -16px 12px; padding: 12px 16px; } }
   details.more { margin-top: 12px; border-top: 1px solid var(--border); }
@@ -415,21 +413,28 @@
 <div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="i18n.js?v=2026.10.29-2"></script>
-<script src="articles.js?v=2026.10.29-2" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
-<script src="firebase-config.js?v=2026.10.29-2"></script>
+<script src="i18n.js?v=2026.10.29-3"></script>
+<script src="articles.js?v=2026.10.29-3" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
+<script src="firebase-config.js?v=2026.10.29-3"></script>
 <script>
 (function () {
   "use strict";
 
   /* ================= constants ================= */
   var KEY = "breakFree.app.v1";
-  var APP_VERSION = "2026.10.29-2"; /* bump when publishing; shown at the bottom of Profile */
+  var APP_VERSION = "2026.10.29-3"; /* bump when publishing; shown at the bottom of Profile */
   var FB_VER = "10.12.2";
   var EMO = {
     alcohol: "🍺", cigarettes: "🚬", weed: "🌿", drugs: "💉", pills: "💊", junkfood: "🍔", sweets: "🍬",
     energy: "⚡", coffee: "☕", porn: "🔞", nailbiting: "😬", betting: "🎰", tiktok: "🎵", reels: "📱", other: "✨"
   };
+  /* each habit's card colour: deep enough for white text on the card header */
+  var HABIT_COLOR = {
+    weed: "#15803d", porn: "#ea580c", cigarettes: "#475569", alcohol: "#b45309", drugs: "#be123c", pills: "#1d4ed8",
+    junkfood: "#a16207", sweets: "#db2777", energy: "#0284c7", coffee: "#78350f", nailbiting: "#0f766e",
+    betting: "#7e22ce", tiktok: "#4338ca", reels: "#a21caf", other: "#0e7490"
+  };
+  function hcStyle(h) { return " style='--hc:" + (HABIT_COLOR[h.key] || HABIT_COLOR.other) + "'"; }
   var HABIT_META = {
     /* countable habits ask for a number; "how often" habits pick from FREQ */
     alcohol: { per: "week", costly: true }, cigarettes: { per: "day", costly: true }, weed: { choice: true, costly: true },
@@ -1061,7 +1066,7 @@
       "<div class='card why-card'><span class='eyebrow'>" + t("whyPageTitle") + "</span>" + esc(S.why) + "</div>" +
       "<div class='actions' style='margin-bottom:16px'><button class='primary' id='checkinNowBtn'>" + ic("check") + "<span>" + t("checkinBtn") + "</span></button></div>" +
       "<div class='slider' id='slider'>" + S.habits.map(function (h, i) {
-        return "<div class='card slide hc" + (i % 3) + "' data-slide='" + i + "'><div class='hc-head'><span class='emo'>" + EMO[h.key] + "</span><h3>" + esc(habitLabel(h)) + "</h3></div>" +
+        return "<div class='card slide' data-slide='" + i + "'" + hcStyle(h) + "><div class='hc-head'><span class='emo'>" + EMO[h.key] + "</span><h3>" + esc(habitLabel(h)) + "</h3></div>" +
           "<div class='timer-title' id='tt" + i + "'></div><div class='timer'>" +
           "<div><b id='tD" + i + "'>0</b><span>" + t("days") + "</span></div><div><b id='tH" + i + "'>0</b><span>" + t("hours") + "</span></div>" +
           "<div><b id='tM" + i + "'>0</b><span>" + t("min") + "</span></div><div><b id='tS" + i + "'>0</b><span>" + t("sec") + "</span></div></div>" +
@@ -1079,7 +1084,7 @@
           (hasStarted(h) ? "<div class='slip-wrap'><button class='slip-btn' data-slip='" + i + "'>" + t("slipBtn") + "</button></div>" : "") + "</div>";
       }).join("") + "</div>" +
       (multi ? "<div class='dots' role='tablist'>" + S.habits.map(function (h, i) {
-        return "<button class='dot hc" + (i % 3) + (i === msIdx ? " on" : "") + "' data-dot='" + i + "' aria-label='" + esc(habitLabel(h)) + "'></button>"; }).join("") + "</div>" +
+        return "<button class='dot" + (i === msIdx ? " on" : "") + "' data-dot='" + i + "'" + hcStyle(h) + " aria-label='" + esc(habitLabel(h)) + "'></button>"; }).join("") + "</div>" +
         "<div class='swipe-hint'>" + t("swipeHint") + "</div>" : "<div class='single-gap'></div>") +
       "<div class='card'><h3>" + t("quoteTitle") + "</h3>" + quoteHtml() +
         "<div class='tip-day'><b>" + ic("bulb") + " " + t("tipOfDay") + "</b><p>" + esc(todaysTip()) + "</p></div></div>" +

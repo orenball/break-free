@@ -413,16 +413,16 @@
 <div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="i18n.js?v=2026.10.29-3"></script>
-<script src="articles.js?v=2026.10.29-3" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
-<script src="firebase-config.js?v=2026.10.29-3"></script>
+<script src="i18n.js?v=2026.11.02-1"></script>
+<script src="articles.js?v=2026.11.02-1" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
+<script src="firebase-config.js?v=2026.11.02-1"></script>
 <script>
 (function () {
   "use strict";
 
   /* ================= constants ================= */
   var KEY = "breakFree.app.v1";
-  var APP_VERSION = "2026.10.29-3"; /* bump when publishing; shown at the bottom of Profile */
+  var APP_VERSION = "2026.11.02-1"; /* bump when publishing; shown at the bottom of Profile */
   var FB_VER = "10.12.2";
   var EMO = {
     alcohol: "🍺", cigarettes: "🚬", weed: "🌿", drugs: "💉", pills: "💊", junkfood: "🍔", sweets: "🍬",
@@ -1390,6 +1390,29 @@
     });
   }
   /* mark a past day for one habit (the calendar only; timers change with "I slipped") */
+  /* a slip marked on a past day restarts the timer from the end of that day; undoing it brings the timer back.
+     The newest slip always decides, so an older day never moves the timer. Returns true if the timer moved. */
+  function setDaySlip(h, k, slipped) {
+    var from = new Date(k + "T00:00").getTime(), to = from + 864e5 - 1, before = h.streakStart;
+    var inDay = function (x) { return x >= from && x <= to; };
+    var had = (h.slips || []).filter(inDay).length;
+    if (slipped && !had) {
+      var runStart = h.firstStart || h.streakStart;
+      (h.slips || []).forEach(function (x) { if (x < to && x > runStart) runStart = x; });
+      h.bestMs = Math.max(h.bestMs || 0, to - runStart);
+      h.slips = (h.slips || []).concat(to).sort(function (a, b) { return a - b; }).slice(-365);
+      h.restarts = (h.restarts || 0) + 1;
+    } else if (!slipped && had) {
+      h.slips = h.slips.filter(function (x) { return !inDay(x); });
+      h.restarts = Math.max(0, (h.restarts || 0) - had);
+    }
+    var last = h.slips && h.slips.length ? Math.max.apply(null, h.slips) : 0;
+    h.streakStart = Math.max(h.firstStart || 0, last) || h.streakStart;
+    if (h.streakStart === before) return false;
+    /* milestones already passed on the corrected timer stay quiet; later ones can be celebrated again */
+    h.celebrated = MILESTONES.filter(function (m) { return milestoneDone(m, h.streakStart, h.saidNo); }).map(function (m) { return m.id; });
+    return true;
+  }
   function openDay(k, hi) {
     var h = S.habits[hi], cur = dayStatus(h, k);
     var label = new Date(k + "T12:00").toLocaleDateString(L().locale, { weekday: "long", day: "numeric", month: "long" });
@@ -1401,7 +1424,9 @@
     function setDay(v) {
       h.marks = h.marks || {};
       if (v) h.marks[k] = v; else delete h.marks[k];
-      save(); closeModal(); if (currentTab === "pHome") renderHome(); toast(t("saved"));
+      var moved = setDaySlip(h, k, v === "no");
+      save(); closeModal(); if (currentTab === "pHome") renderHome();
+      toast(t(moved && v === "no" ? "dayTimerReset" : "saved"));
     }
     $("dYes").addEventListener("click", function () { setDay("yes"); });
     $("dNo").addEventListener("click", function () { setDay("no"); });

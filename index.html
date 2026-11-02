@@ -205,16 +205,24 @@
   details.more[open] > summary .chev { transform: rotate(180deg); }
   .hc-days-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
   .hc-days-head span:last-child { color: var(--muted); font-weight: 400; }
-  .day.pre { opacity: 0.35; }
-  .hc-days .days { gap: 4px; }
-  .hc-days .day { padding: 3px 0 4px; font-size: 10px; line-height: 1.15; border-radius: 8px; }
-  .hc-days .day b { font-size: 14px; line-height: 1.2; }
-  .hc-days .day small { display: none; }
-  button.day { display: block; width: 100%; min-height: 0; padding: 6px 2px; border: none; font-size: 12px; color: var(--text); }
+  /* the year calendar: 12 small months, a day per square */
+  .cal-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 10px; font-weight: 700; font-size: 15px; }
+  .cal-nav button { min-height: 32px; padding: 2px 14px; flex: 0 0 auto; }
+  .cal-nav button:disabled { opacity: 0.3; }
+  .cal-months { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 12px; }
+  .cal-m h4 { margin: 0 0 4px; font-size: 12px; font-weight: 700; }
+  .cal-m.now h4 { color: var(--hc-ink); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-grid .wd { font-size: 9px; text-align: center; color: var(--muted); }
+  button.cday { display: block; width: 100%; min-width: 0; min-height: 0; height: 22px; padding: 0; line-height: 22px; text-align: center; font-size: 10.5px; font-weight: 500; border: none; border-radius: 5px; background: var(--panel-2); color: var(--text); }
+  button.cday.yes { background: var(--accent); color: var(--accent-text); }
+  button.cday.no { background: var(--warn); color: #fff; }
+  button.cday.pre, button.cday.future { background: transparent; color: var(--muted); opacity: 0.55; }
+  button.cday.today { outline: 2px solid var(--hc-ink); outline-offset: -1px; }
+  @media (min-width: 640px) { .cal-months { grid-template-columns: repeat(3, 1fr); } }
   .moods { display: flex; justify-content: center; gap: 6px; margin: 6px 0 2px; }
   .moods button { font-size: 26px; min-height: 48px; padding: 6px 8px; background: transparent; border-color: transparent; }
   .moods button.selected { transform: scale(1.15); }
-  .day small { display: block; font-size: 13px; line-height: 1; min-height: 13px; }
   .journal { display: flex; flex-direction: column; gap: 10px; }
   .jrow { display: flex; gap: 10px; align-items: flex-start; }
   .jrow .jm { font-size: 22px; line-height: 1.2; }
@@ -232,12 +240,6 @@
   .row-btns { display: flex; gap: 4px; flex: 0 0 auto; }
   .row-btns button { padding: 8px 10px; min-height: 40px; }
   .fav-box { background: var(--gold-soft); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
-  .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-  .day { text-align: center; border-radius: 10px; padding: 6px 2px; background: var(--panel-2); font-size: 12px; }
-  .day b { display: block; font-size: 18px; }
-  .day.yes { background: var(--accent-soft); }
-  .day.no { background: var(--warn-soft); }
-  .day.today { outline: 2px solid var(--accent); }
   .actions { display: flex; flex-wrap: wrap; gap: 10px; }
   .actions > * { flex: 1 1 150px; }
 
@@ -413,16 +415,16 @@
 <div class="overlay" id="overlay"><div class="modal" id="modal" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 
-<script src="i18n.js?v=2026.11.02-2"></script>
-<script src="articles.js?v=2026.11.02-2" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
-<script src="firebase-config.js?v=2026.11.02-2"></script>
+<script src="i18n.js?v=2026.11.02-3"></script>
+<script src="articles.js?v=2026.11.02-3" onerror="window.BF_ARTICLES = window.BF_ARTICLES || []"></script>
+<script src="firebase-config.js?v=2026.11.02-3"></script>
 <script>
 (function () {
   "use strict";
 
   /* ================= constants ================= */
   var KEY = "breakFree.app.v1";
-  var APP_VERSION = "2026.11.02-2"; /* bump when publishing; shown at the bottom of Profile */
+  var APP_VERSION = "2026.11.02-3"; /* bump when publishing; shown at the bottom of Profile */
   var FB_VER = "10.12.2";
   var EMO = {
     alcohol: "🍺", cigarettes: "🚬", weed: "🌿", drugs: "💉", pills: "💊", junkfood: "🍔", sweets: "🍬",
@@ -1078,7 +1080,7 @@
             "<div class='stats' id='stats2" + i + "' style='margin-top:12px'></div>" +
             chartHtml(h, i) +
             "<div class='ms-strip' id='ms" + i + "'></div>" +
-            "<div class='hc-days'><div class='hc-days-head'><span>" + t("daysTitle") + "</span><span id='dcount" + i + "'></span></div><div class='days' id='days" + i + "'></div>" +
+            "<div class='hc-days'><div class='hc-days-head'><span>" + t("daysTitle") + "</span><span id='dcount" + i + "'></span></div><div id='days" + i + "'></div>" +
             "<p class='small muted' style='margin:8px 0 0'>" + t("daysLegend") + "</p></div>" +
           "</details>" +
           (hasStarted(h) ? "<div class='slip-wrap'><button class='slip-btn' data-slip='" + i + "'>" + t("slipBtn") + "</button></div>" : "") + "</div>";
@@ -1361,36 +1363,50 @@
      "yes" (the day was answered and this habit wasn't the one that slipped, or marked clean), "none". */
   function dayStatus(h, k) {
     var from = new Date(k + "T00:00").getTime(), to = from + 864e5 - 1;
+    if (from > Date.now()) return "future";
     if (!h.firstStart || to < h.firstStart || Date.now() < h.firstStart) return "pre";   /* before the start, or not started yet */
     if (h.marks && h.marks[k]) return h.marks[k];
     if ((h.slips || []).some(function (x) { return x >= from && x <= to; })) return "no";
     if (S.checkins[k]) return "yes";
     return "none";
   }
+  /* the year on show for each habit (this session only; opens on the current year) */
+  var calYears = {};
+  function calKey(h) { return h.key + "|" + (h.other || ""); }
   function renderDays() {
-    var today = todayStr();
+    var today = todayStr(), thisYear = new Date().getFullYear(), loc = L().locale;
+    var fDay = new Intl.DateTimeFormat(loc, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    var fMonth = new Intl.DateTimeFormat(loc, { month: "long" }), fWd = new Intl.DateTimeFormat(loc, { weekday: "narrow" });
+    var wdHtml = "";
+    for (var w = 0; w < 7; w++) wdHtml += "<span class='wd'>" + esc(fWd.format(new Date(2023, 0, 1 + w))) + "</span>";   /* 1 Jan 2023 was a Sunday */
     S.habits.forEach(function (h, hi) {
       var box = $("days" + hi); if (!box) return;
-      var html = "", clean = 0, counted = 0;
-      for (var i = 29; i >= 0; i--) {
-        var d = new Date(); d.setDate(d.getDate() - i);
-        var k = dateKey(d), v = dayStatus(h, k);
-        if (v !== "pre") counted++;
-        if (v === "yes") clean++;
-        html += "<button class='day" + (v === "yes" ? " yes" : v === "no" ? " no" : v === "pre" ? " pre" : "") + (k === today ? " today" : "") + "' data-day='" + k + "' data-h='" + hi + "'" + (v === "pre" ? " disabled" : "") +
-          " aria-label='" + esc(d.toLocaleDateString(L().locale, { weekday: "long", day: "numeric", month: "long" })) + "'>" +
-          d.toLocaleDateString(L().locale, { weekday: "narrow" }) + "<b>" + (v === "yes" ? "✓" : v === "no" ? "✗" : v === "pre" ? "–" : "·") + "</b>" + d.getDate() +
-          "<small>" + (v !== "pre" && S.journal[k] && S.journal[k].mood ? MOODS[S.journal[k].mood - 1] : "") + "</small></button>";
+      var firstYear = h.firstStart ? Math.min(new Date(h.firstStart).getFullYear(), thisYear) : thisYear;
+      var y = Math.max(firstYear, Math.min(thisYear, calYears[calKey(h)] || thisYear));
+      var clean = 0, counted = 0, months = "";
+      for (var m = 0; m < 12; m++) {
+        var pad0 = new Date(y, m, 1).getDay(), last = new Date(y, m + 1, 0).getDate();
+        var cells = wdHtml + new Array(pad0 + 1).join("<span></span>");
+        for (var n = 1; n <= last; n++) {
+          var d = new Date(y, m, n), k = dateKey(d), v = dayStatus(h, k), off = v === "pre" || v === "future";
+          if (!off) counted++;
+          if (v === "yes") clean++;
+          var label = fDay.format(d) + (v === "yes" ? ", " + t("dayYes") : v === "no" ? ", " + t("dayNo") : "");
+          cells += "<button class='cday " + v + (k === today ? " today" : "") + "' data-day='" + k + "'" + (off ? " disabled" : "") + " aria-label='" + esc(label) + "'>" + n + "</button>";
+        }
+        months += "<div class='cal-m" + (y === thisYear && m === new Date().getMonth() ? " now" : "") + "'><h4>" + esc(fMonth.format(new Date(y, m, 1))) + "</h4><div class='cal-grid'>" + cells + "</div></div>";
       }
-      box.innerHTML = html;
+      var older = S.lang === "he" ? "›" : "‹", newer = S.lang === "he" ? "‹" : "›";
+      box.innerHTML = "<div class='cal-nav'><button data-yr='-1' aria-label='" + (y - 1) + "'" + (y <= firstYear ? " disabled" : "") + ">" + older + "</button><span>" + y + "</span>" +
+        "<button data-yr='1' aria-label='" + (y + 1) + "'" + (y >= thisYear ? " disabled" : "") + ">" + newer + "</button></div><div class='cal-months'>" + months + "</div>";
       $("dcount" + hi).textContent = counted ? t("cleanOf", { n: clean, total: counted }) : "";
-      box.querySelectorAll("[data-day]").forEach(function (b) {
-        b.addEventListener("click", function () {
-          var now = todayStr();
-          if (b.dataset.day > now) { renderDays(); return; }   /* the phone's date moved back since this was drawn: a future day can't be marked */
-          if (b.dataset.day === now) openCheckin(); else openDay(b.dataset.day, +b.dataset.h);
-        });
-      });
+      box.onclick = function (e) {
+        var b = e.target.closest("button"); if (!b || b.disabled) return;
+        if (b.dataset.yr) { calYears[calKey(h)] = y + (+b.dataset.yr); renderDays(); return; }
+        var now = todayStr();
+        if (b.dataset.day > now) { renderDays(); return; }   /* the phone's date moved back since this was drawn: a future day can't be marked */
+        if (b.dataset.day === now) openCheckin(); else openDay(b.dataset.day, hi);
+      };
     });
   }
   /* a slip marked on a past day restarts the timer from the end of that day; undoing it brings the timer back.

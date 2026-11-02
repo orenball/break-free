@@ -111,7 +111,7 @@ window.BF_I18N = {
       msToGo: "{t} to go", msAllReached: "You reached every milestone you picked!", msCustomHint: "You'll know when you get there — and it'll feel great.",
       saidNoBtn: "I said “no” to someone today!", saidNoDone: "You said “no” on {date}. Proud of you!",
       saidNoToast: "Saying no is a superpower. Well done! 🙅",
-      daysTitle: "Last 30 days", daysLegend: "✓ clean · ✗ slip · · not marked · – before you started. Tap a day to mark it.", cleanOf: "{n}/{total} clean days", dayQFor: "How did this day go with {habit}?",
+      daysTitle: "My year", daysLegend: "Green: clean · Red: slip · Grey: not marked · Faded: before you started or still to come. Tap a day to mark it.", cleanOf: "{n}/{total} clean days", dayQFor: "How did this day go with {habit}?",
       cdD: "{d} d {h} h", cdH: "{h} h {m} min", cdM: "{m} min",
 
       shareCardTitle: "Share your journey",
@@ -392,7 +392,7 @@ window.BF_I18N = {
       msToGo: "עוד {t}", msAllReached: "[[הגעת|הגעת]] לכל המטרות [[שבחרת|שבחרת]]!", msCustomHint: "[[תדע|תדעי]] כשתגיע[[|י]] לשם — וזו תהיה הרגשה מעולה.",
       saidNoBtn: "היום [[אמרתי|אמרתי]] “לא” למישהו!", saidNoDone: "[[אמרת|אמרת]] “לא” ב־{date}. [[גאים בך|גאים בך]]!",
       saidNoToast: "להגיד לא זה כוח־על. כל הכבוד! 🙅",
-      daysTitle: "30 הימים האחרונים", daysLegend: "✓ נקי · ✗ נשברתי · · לא סומן · – לפני שהתחלת. [[לחץ|לחצי]] על יום כדי לסמן אותו.", cleanOf: "{n}/{total} ימים נקיים", dayQFor: "איך עבר היום הזה עם {habit}?",
+      daysTitle: "השנה שלי", daysLegend: "ירוק: נקי · אדום: נשברתי · אפור: לא סומן · דהוי: לפני שהתחלת או עוד לא הגיע. [[לחץ|לחצי]] על יום כדי לסמן אותו.", cleanOf: "{n}/{total} ימים נקיים", dayQFor: "איך עבר היום הזה עם {habit}?",
       cdD: "{d} ימ׳ {h} שע׳", cdH: "{h} שע׳ {m} דק׳", cdM: "{m} דק׳",
 
       shareCardTitle: "[[שתף|שתפי]] את המסע",
